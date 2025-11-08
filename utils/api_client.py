@@ -237,12 +237,22 @@ class OpenAIAPIClient:
         
         # Add optional parameters as form fields
         for key, value in params.items():
-            if value is not None:
-                # Convert all values to strings for form data
-                form_data[key] = (None, str(value))
+            if value is not None and value != "":
+                # Don't convert integers - keep them as is for proper form encoding
+                if isinstance(value, int):
+                    form_data[key] = (None, str(value))
+                else:
+                    form_data[key] = (None, value)
         
         # Remove Content-Type header to let requests set it with boundary
         headers = {k: v for k, v in self.session.headers.items() if k.lower() != 'content-type'}
+        
+        # Debug logging
+        print(f"[DEBUG] Video API Request:")
+        print(f"  URL: {url}")
+        print(f"  Model: {model}")
+        print(f"  Prompt: {prompt}")
+        print(f"  Additional params: {list(params.keys())}")
         
         try:
             response = self.session.post(
@@ -253,6 +263,13 @@ class OpenAIAPIClient:
             )
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.HTTPError as e:
+            error_details = ""
+            try:
+                error_details = e.response.text
+            except:
+                pass
+            raise Exception(f"Video generation failed: {str(e)}\nResponse: {error_details}")
         except Exception as e:
             raise Exception(f"Video generation failed: {str(e)}")
     
