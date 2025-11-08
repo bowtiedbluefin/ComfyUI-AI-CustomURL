@@ -98,8 +98,8 @@ class ImageGenerationNode(io.ComfyNode):
     ) -> io.NodeOutput:
         """Execute image generation"""
         
-        from utils.api_client import OpenAIAPIClient
-        from utils.converters import url_to_tensor, base64_to_tensor, create_blank_tensor
+        from ..utils.api_client import OpenAIAPIClient
+        from ..utils.converters import url_to_tensor, base64_to_tensor, create_blank_tensor
         
         try:
             client = OpenAIAPIClient(base_url, api_key)

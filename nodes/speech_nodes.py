@@ -93,7 +93,7 @@ class SpeechGenerationNode(io.ComfyNode):
     ) -> io.NodeOutput:
         """Execute speech generation"""
         
-        from utils.api_client import OpenAIAPIClient
+        from ..utils.api_client import OpenAIAPIClient
         
         try:
             client = OpenAIAPIClient(base_url, api_key)

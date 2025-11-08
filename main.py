@@ -13,7 +13,7 @@ from aiohttp import web
 from server import PromptServer
 
 # Import all node classes
-from nodes import (
+from .nodes import (
     TextGenerationNode,
     TextAdvancedParamsNode,
     ImageGenerationNode,
@@ -53,7 +53,7 @@ async def get_models(request):
                 status=400
             )
         
-        from utils.model_manager import ModelManager
+        from .utils.model_manager import ModelManager
         
         manager = ModelManager()
         models = manager.fetch_models(
@@ -96,7 +96,7 @@ async def test_connection(request):
                 status=400
             )
         
-        from utils.api_client import OpenAIAPIClient
+        from .utils.api_client import OpenAIAPIClient
         
         client = OpenAIAPIClient(base_url, api_key, timeout=10)
         models = client.list_models()
@@ -137,7 +137,7 @@ async def filter_models(request):
                 status=400
             )
         
-        from utils.model_manager import ModelManager
+        from .utils.model_manager import ModelManager
         
         manager = ModelManager()
         
@@ -177,7 +177,7 @@ async def clear_cache(request):
         data = await request.json()
         profile = data.get("profile")
         
-        from utils.model_manager import ModelManager
+        from .utils.model_manager import ModelManager
         
         manager = ModelManager()
         manager.clear_cache(profile)

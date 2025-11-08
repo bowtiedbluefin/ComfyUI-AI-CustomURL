@@ -32,7 +32,7 @@ class ImageURLLoaderNode(io.ComfyNode):
     def execute(cls, url: str) -> io.NodeOutput:
         """Load image from URL"""
         
-        from utils.converters import url_to_tensor, create_blank_tensor
+        from ..utils.converters import url_to_tensor, create_blank_tensor
         
         try:
             image = url_to_tensor(url)

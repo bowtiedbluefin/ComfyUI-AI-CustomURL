@@ -89,8 +89,8 @@ class TextGenerationNode(io.ComfyNode):
     ) -> io.NodeOutput:
         """Execute text generation"""
         
-        from utils.api_client import OpenAIAPIClient
-        from utils.converters import image_to_base64
+        from ..utils.api_client import OpenAIAPIClient
+        from ..utils.converters import image_to_base64
         
         try:
             client = OpenAIAPIClient(base_url, api_key)
