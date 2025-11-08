@@ -205,8 +205,6 @@ class OpenAIAPIClient:
         """
         Generate videos (OpenAI Video API)
         
-        OpenAI uses multipart/form-data, not JSON for video generation.
-        
         Args:
             model: Model identifier (required)
             prompt: Video description (required)
@@ -226,52 +224,28 @@ class OpenAIAPIClient:
         Returns:
             Video generation response object
         """
-        url = f"{self.base_url}/videos"
-        
-        # OpenAI uses multipart/form-data for video generation
-        # Build form fields
-        form_data = {
-            "model": (None, model),
-            "prompt": (None, prompt),
+        # OpenAI video API uses JSON, not multipart/form-data
+        data = {
+            "model": model,
+            "prompt": prompt,
+            **params
         }
-        
-        # Add optional parameters as form fields
-        for key, value in params.items():
-            if value is not None and value != "":
-                # Don't convert integers - keep them as is for proper form encoding
-                if isinstance(value, int):
-                    form_data[key] = (None, str(value))
-                else:
-                    form_data[key] = (None, value)
-        
-        # Remove Content-Type header to let requests set it with boundary
-        headers = {k: v for k, v in self.session.headers.items() if k.lower() != 'content-type'}
         
         # Debug logging
         print(f"[DEBUG] Video API Request:")
-        print(f"  URL: {url}")
-        print(f"  Model: {model}")
-        print(f"  Prompt: {prompt}")
-        print(f"  Additional params: {list(params.keys())}")
+        print(f"  URL: {self.base_url}/videos")
+        print(f"  Data: {json.dumps(data, indent=2)}")
         
         try:
-            response = self.session.post(
-                url,
-                files=form_data,
-                headers=headers,
-                timeout=self.timeout,
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.HTTPError as e:
-            error_details = ""
-            try:
-                error_details = e.response.text
-            except:
-                pass
-            raise Exception(f"Video generation failed: {str(e)}\nResponse: {error_details}")
+            response = self._request("POST", "/videos", json=data)
+            return response
         except Exception as e:
-            raise Exception(f"Video generation failed: {str(e)}")
+            # Extract error details if available
+            error_msg = str(e)
+            if "Response:" in error_msg:
+                raise Exception(f"Video generation failed: {error_msg}")
+            else:
+                raise Exception(f"Video generation failed: {str(e)}")
     
     def generate_speech(
         self,
