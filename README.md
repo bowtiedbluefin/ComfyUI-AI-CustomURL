@@ -8,16 +8,16 @@ A comprehensive ComfyUI extension that enables **text, image, video, and speech 
 - **Multiple Modalities**: Text, Image, Video, and Speech generation
 - **Advanced Parameters**: Fine-tune generations with advanced parameter nodes
 - **Multi-Provider**: Switch between different API providers in one workflow
-- **Model Discovery**: Automatic model listing via `/v1/models` endpoint
-- **Caching**: Intelligent model caching for better performance
+- **Simple Configuration**: Just enter API URL, key, and model name
+- **No Dependencies on Specific APIs**: Works with any compatible endpoint
 
 ## 🔌 Supported APIs
 
-- **OpenAI** - GPT-4, DALL-E 3, Sora, TTS
-- **Venice.ai** - Llama, Flux, privacy-focused
-- **OpenRouter** - Multi-provider gateway
-- **Together.ai** - Open-source models
-- **Ollama** - Local inference
+- **OpenAI** 
+- **Venice.ai** 
+- **OpenRouter** 
+- **Together.ai** 
+- **Ollama** 
 - Any other OpenAI-compatible API
 
 ## 📦 Installation
@@ -51,10 +51,11 @@ cd ComfyUI-AI-CustomURL
 ### Basic Text Generation
 
 1. Add "Generate Text (AI CustomURL)" node
-2. Enter your API base URL and key
-3. Select a model (e.g., "gpt-4o")
-4. Enter your prompt
-5. Execute!
+2. Enter your API base URL (e.g., `https://api.openai.com/v1`)
+3. Enter your API key
+4. Enter the model name (e.g., `gpt-4o`)
+5. Enter your prompt
+6. Execute!
 
 ### Image Generation
 
@@ -230,14 +231,19 @@ Use different API providers in the same workflow:
 [OpenAI Video Gen] → video
 ```
 
-## 🔍 Server Routes
+## 💡 How Model Selection Works
 
-The extension provides HTTP endpoints for integration:
+Unlike some extensions, **AI CustomURL doesn't auto-fetch models**. You simply:
 
-- `GET /ai_customurl/models` - List available models
-- `POST /ai_customurl/test_connection` - Test API connection
-- `GET /ai_customurl/filter_models` - Filter models by capability
-- `POST /ai_customurl/clear_cache` - Clear model cache
+1. Look up the model name in your API provider's documentation
+2. Enter it manually in the `model` field
+
+**Examples:**
+- OpenAI: `gpt-4o`, `dall-e-3`, `sora-1.0`, `tts-1`
+- Venice.ai: `llama-3.3-70b`, `flux-dev`, `tts-kokoro`
+- Ollama: `llama3:70b`, `mistral`, `codellama`
+
+This keeps the extension simple and compatible with any API!
 
 ## 🐛 Troubleshooting
 
