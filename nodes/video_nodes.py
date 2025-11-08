@@ -119,9 +119,9 @@ class VideoGenerationNode:
             if image is not None:
                 # Convert image to base64 data URL
                 base64_img = image_to_base64(image)
-                # OpenAI uses "input_reference" for image-to-video
+                # OpenAI uses "image" parameter for image-to-video (as form field)
                 if "openai.com" in base_url:
-                    params["input_reference"] = f"data:image/png;base64,{base64_img}"
+                    params["image"] = f"data:image/png;base64,{base64_img}"
                 else:
                     params["image_url"] = f"data:image/png;base64,{base64_img}"
             

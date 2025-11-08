@@ -123,7 +123,8 @@ models:
 - `resolution` + `aspect_ratio` → `size` (e.g., "1920x1080")
 - `duration` (integer) → `seconds` (e.g., 5)
 - `fps` is filtered out (not supported by OpenAI)
-- For image-to-video, connect an image input → `input_reference`
+- For image-to-video, connect an image input → `image` parameter
+- OpenAI uses multipart/form-data (not JSON) - handled automatically
 
 ### 💾 Saving Video Locally
 
