@@ -1,69 +1,38 @@
 """
 ComfyUI AI CustomURL Extension
 
-Traditional __init__.py for backward compatibility with older ComfyUI versions.
-For newer versions, see main.py with comfy_entrypoint().
+Traditional ComfyUI node format for maximum compatibility.
 """
 
-from .main import comfy_entrypoint
+# Import all node mappings
+from .nodes.text_nodes import NODE_CLASS_MAPPINGS as TEXT_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as TEXT_DISPLAY
+from .nodes.image_nodes import NODE_CLASS_MAPPINGS as IMAGE_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as IMAGE_DISPLAY
+from .nodes.video_nodes import NODE_CLASS_MAPPINGS as VIDEO_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as VIDEO_DISPLAY
+from .nodes.speech_nodes import NODE_CLASS_MAPPINGS as SPEECH_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as SPEECH_DISPLAY
+from .nodes.utility_nodes import NODE_CLASS_MAPPINGS as UTILITY_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as UTILITY_DISPLAY
 
-# Try to use the modern API if available
-try:
-    # Modern API - this will be used by newer ComfyUI versions
-    __all__ = ['comfy_entrypoint']
-except:
-    pass
+# Combine all mappings
+NODE_CLASS_MAPPINGS = {
+    **TEXT_MAPPINGS,
+    **IMAGE_MAPPINGS,
+    **VIDEO_MAPPINGS,
+    **SPEECH_MAPPINGS,
+    **UTILITY_MAPPINGS,
+}
 
-# Legacy support for older ComfyUI versions
-try:
-    from .nodes.text_nodes import TextGenerationNode, TextAdvancedParamsNode
-    from .nodes.image_nodes import ImageGenerationNode, ImageAdvancedParamsNode
-    from .nodes.video_nodes import VideoGenerationNode, VideoAdvancedParamsNode
-    from .nodes.speech_nodes import SpeechGenerationNode, SpeechAdvancedParamsNode
-    from .nodes.utility_nodes import ImageURLLoaderNode, VideoURLLoaderNode
+NODE_DISPLAY_NAME_MAPPINGS = {
+    **TEXT_DISPLAY,
+    **IMAGE_DISPLAY,
+    **VIDEO_DISPLAY,
+    **SPEECH_DISPLAY,
+    **UTILITY_DISPLAY,
+}
 
-    # Legacy ComfyUI expects NODE_CLASS_MAPPINGS and NODE_DISPLAY_NAME_MAPPINGS
-    NODE_CLASS_MAPPINGS = {
-        "TextGeneration_AICustomURL": TextGenerationNode,
-        "TextAdvancedParams_AICustomURL": TextAdvancedParamsNode,
-        "ImageGeneration_AICustomURL": ImageGenerationNode,
-        "ImageAdvancedParams_AICustomURL": ImageAdvancedParamsNode,
-        "VideoGeneration_AICustomURL": VideoGenerationNode,
-        "VideoAdvancedParams_AICustomURL": VideoAdvancedParamsNode,
-        "SpeechGeneration_AICustomURL": SpeechGenerationNode,
-        "SpeechAdvancedParams_AICustomURL": SpeechAdvancedParamsNode,
-        "ImageURLLoader_AICustomURL": ImageURLLoaderNode,
-        "VideoURLLoader_AICustomURL": VideoURLLoaderNode,
-    }
+__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
 
-    NODE_DISPLAY_NAME_MAPPINGS = {
-        "TextGeneration_AICustomURL": "Generate Text (AI CustomURL)",
-        "TextAdvancedParams_AICustomURL": "Text Advanced Parameters",
-        "ImageGeneration_AICustomURL": "Generate Image (AI CustomURL)",
-        "ImageAdvancedParams_AICustomURL": "Image Advanced Parameters",
-        "VideoGeneration_AICustomURL": "Generate Video (AI CustomURL)",
-        "VideoAdvancedParams_AICustomURL": "Video Advanced Parameters",
-        "SpeechGeneration_AICustomURL": "Generate Speech (AI CustomURL)",
-        "SpeechAdvancedParams_AICustomURL": "Speech Advanced Parameters",
-        "ImageURLLoader_AICustomURL": "Load Image from URL",
-        "VideoURLLoader_AICustomURL": "Load Video from URL",
-    }
-
-    __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS', 'comfy_entrypoint']
-
-    print("=" * 60)
-    print("AI CustomURL Extension Loaded (Legacy Mode)")
-    print("=" * 60)
-    print("Supports: Text, Image, Video, and Speech Generation")
-    print("Compatible with: OpenAI, Venice.ai, OpenRouter, Together.ai, Ollama")
-    print("=" * 60)
-
-except Exception as e:
-    print(f"Error loading AI CustomURL extension: {e}")
-    print("The extension requires the comfy_api.latest module.")
-    print("Please update ComfyUI to a newer version that supports the modern node API.")
-    
-    # Provide empty mappings to prevent crashes
-    NODE_CLASS_MAPPINGS = {}
-    NODE_DISPLAY_NAME_MAPPINGS = {}
-
+print("=" * 60)
+print("AI CustomURL Extension Loaded")
+print("=" * 60)
+print("Nodes: Text, Image, Video, Speech Generation + Utilities")
+print("Compatible with: OpenAI, Venice.ai, OpenRouter, Together.ai, Ollama")
+print("=" * 60)

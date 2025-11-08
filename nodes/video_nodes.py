@@ -1,11 +1,9 @@
 """Video generation nodes for AI CustomURL"""
 
 import json
-from typing import Optional
-from comfy_api.latest import io
 
 
-class VideoGenerationNode(io.ComfyNode):
+class VideoGenerationNode:
     """
     Generate videos using OpenAI-compatible video generation API
     
@@ -13,89 +11,69 @@ class VideoGenerationNode(io.ComfyNode):
     """
     
     @classmethod
-    def define_schema(cls) -> io.Schema:
-        return io.Schema(
-            node_id="VideoGeneration_AICustomURL",
-            display_name="Generate Video (AI CustomURL)",
-            category="AI_CustomURL/Video",
-            inputs=[
-                # API Configuration
-                io.String.Input(
-                    "base_url",
-                    default="https://api.openai.com/v1",
-                    multiline=False,
-                ),
-                io.String.Input(
-                    "api_key",
-                    default="",
-                    multiline=False,
-                ),
-                
-                # Required Parameters (OpenAI spec)
-                io.String.Input(
-                    "model",
-                    default="sora-1.0",
-                    multiline=False,
-                ),
-                io.String.Input(
-                    "prompt",
-                    default="",
-                    multiline=True,
-                ),
-                
-                # Optional Parameters
-                io.Combo.Input(
-                    "resolution",
-                    options=["1080p", "720p", "480p"],
-                ),
-                io.Int.Input(
-                    "duration",
-                    default=5,
-                    min=1,
-                    max=60,
-                ),
-                io.Int.Input(
-                    "fps",
-                    default=24,
-                    min=1,
-                    max=60,
-                ),
-                io.Combo.Input(
-                    "aspect_ratio",
-                    options=["16:9", "9:16", "1:1", "4:3", "21:9"],
-                ),
-                
-                # Optional Image Input (for image-to-video)
-                io.Image.Input("image", optional=True),
-                
-                # Advanced parameters (custom JSON)
-                io.String.Input(
-                    "advanced_params_json",
-                    default="",
-                    multiline=False,
-                    optional=True,
-                ),
-            ],
-            outputs=[
-                io.String.Output("video_url"),
-                io.String.Output("response_json"),
-            ],
-        )
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "base_url": ("STRING", {
+                    "default": "https://api.openai.com/v1",
+                    "multiline": False,
+                }),
+                "api_key": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+                "model": ("STRING", {
+                    "default": "sora-1.0",
+                    "multiline": False,
+                }),
+                "prompt": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                }),
+                "resolution": (["1080p", "720p", "480p"], {
+                    "default": "1080p",
+                }),
+                "duration": ("INT", {
+                    "default": 5,
+                    "min": 1,
+                    "max": 60,
+                }),
+                "fps": ("INT", {
+                    "default": 24,
+                    "min": 1,
+                    "max": 60,
+                }),
+                "aspect_ratio": (["16:9", "9:16", "1:1", "4:3", "21:9"], {
+                    "default": "16:9",
+                }),
+            },
+            "optional": {
+                "image": ("IMAGE",),
+                "advanced_params_json": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+            },
+        }
     
-    @classmethod
-    def execute(
-        cls,
-        base_url: str,
-        api_key: str,
-        model: str,
-        prompt: str,
-        resolution: str,
-        duration: int,
-        fps: int,
-        aspect_ratio: str,
-        image: Optional[object] = None,
-        advanced_params_json: str = "",
-    ) -> io.NodeOutput:
+    RETURN_TYPES = ("STRING", "STRING")
+    RETURN_NAMES = ("video_url", "response_json")
+    FUNCTION = "generate_video"
+    CATEGORY = "AI CustomURL/Video"
+    
+    def generate_video(
+        self,
+        base_url,
+        api_key,
+        model,
+        prompt,
+        resolution,
+        duration,
+        fps,
+        aspect_ratio,
+        image=None,
+        advanced_params_json="",
+    ):
         """Execute video generation"""
         
         from ..utils.api_client import OpenAIAPIClient
@@ -146,15 +124,15 @@ class VideoGenerationNode(io.ComfyNode):
                 print("Warning: No video URL found in response")
                 video_url = "error: no video URL in response"
             
-            return io.NodeOutput(video_url, response_json)
+            return (video_url, response_json)
             
         except Exception as e:
             error_msg = f"Video generation failed: {str(e)}"
             print(error_msg)
-            return io.NodeOutput(error_msg, str(e))
+            return (error_msg, str(e))
 
 
-class VideoAdvancedParamsNode(io.ComfyNode):
+class VideoAdvancedParamsNode:
     """
     Advanced parameters for video generation
     
@@ -162,95 +140,70 @@ class VideoAdvancedParamsNode(io.ComfyNode):
     """
     
     @classmethod
-    def define_schema(cls) -> io.Schema:
-        return io.Schema(
-            node_id="VideoAdvancedParams_AICustomURL",
-            display_name="Video Advanced Parameters",
-            category="AI_CustomURL/Video",
-            inputs=[
-                # Seed for reproducibility
-                io.Int.Input(
-                    "seed",
-                    default=-1,
-                    min=-1,
-                    max=2147483647,
-                ),
-                
-                # Motion strength (some APIs)
-                io.Float.Input(
-                    "motion_strength",
-                    default=1.0,
-                    min=0.0,
-                    max=2.0,
-                    step=0.1,
-                ),
-                
-                # Camera motion
-                io.Combo.Input(
-                    "camera_motion",
-                    options=["none", "static", "pan_left", "pan_right", "zoom_in", "zoom_out", "rotate"],
-                ),
-                
-                # Loop video
-                io.Combo.Input(
-                    "loop",
-                    options=["false", "true"],
-                ),
-                
-                # End frame (for first-to-last interpolation)
-                io.Image.Input("end_image", optional=True),
-                
-                # Upscale output
-                io.Combo.Input(
-                    "upscale",
-                    options=["false", "true"],
-                ),
-                
-                # Negative prompt (some APIs)
-                io.String.Input(
-                    "negative_prompt",
-                    default="",
-                    multiline=True,
-                ),
-                
-                # CFG scale (some APIs)
-                io.Float.Input(
-                    "guidance_scale",
-                    default=7.5,
-                    min=1.0,
-                    max=20.0,
-                    step=0.5,
-                ),
-                
-                # Number of inference steps (some APIs)
-                io.Int.Input(
-                    "steps",
-                    default=50,
-                    min=1,
-                    max=150,
-                ),
-            ],
-            outputs=[
-                io.String.Output("params_json"),
-            ],
-        )
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "seed": ("INT", {
+                    "default": -1,
+                    "min": -1,
+                    "max": 2147483647,
+                }),
+                "motion_strength": ("FLOAT", {
+                    "default": 1.0,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "step": 0.1,
+                }),
+                "camera_motion": (["none", "static", "pan_left", "pan_right", "zoom_in", "zoom_out", "rotate"], {
+                    "default": "none",
+                }),
+                "loop": (["false", "true"], {
+                    "default": "false",
+                }),
+                "upscale": (["false", "true"], {
+                    "default": "false",
+                }),
+                "negative_prompt": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                }),
+                "guidance_scale": ("FLOAT", {
+                    "default": 7.5,
+                    "min": 1.0,
+                    "max": 20.0,
+                    "step": 0.5,
+                }),
+                "steps": ("INT", {
+                    "default": 50,
+                    "min": 1,
+                    "max": 150,
+                }),
+            },
+            "optional": {
+                "end_image": ("IMAGE",),
+            },
+        }
     
-    @classmethod
-    def execute(
-        cls,
-        seed: int,
-        motion_strength: float,
-        camera_motion: str,
-        loop: str,
-        end_image: Optional[object],
-        upscale: str,
-        negative_prompt: str,
-        guidance_scale: float,
-        steps: int,
-    ) -> io.NodeOutput:
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("params_json",)
+    FUNCTION = "generate_params"
+    CATEGORY = "AI CustomURL/Video"
+    
+    def generate_params(
+        self,
+        seed,
+        motion_strength,
+        camera_motion,
+        loop,
+        upscale,
+        negative_prompt,
+        guidance_scale,
+        steps,
+        end_image=None,
+    ):
         """Build advanced parameters object"""
         
-        from utils.converters import image_to_base64
+        from ..utils.converters import image_to_base64
         
         params = {}
         
@@ -293,5 +246,15 @@ class VideoAdvancedParamsNode(io.ComfyNode):
             params["steps"] = steps
             params["num_inference_steps"] = steps  # Alternative name
         
-        return io.NodeOutput(json.dumps(params))
+        return (json.dumps(params),)
 
+
+NODE_CLASS_MAPPINGS = {
+    "VideoGeneration_AICustomURL": VideoGenerationNode,
+    "VideoAdvancedParams_AICustomURL": VideoAdvancedParamsNode,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "VideoGeneration_AICustomURL": "Generate Video (AI CustomURL)",
+    "VideoAdvancedParams_AICustomURL": "Video Advanced Parameters",
+}

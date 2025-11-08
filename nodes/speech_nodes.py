@@ -3,13 +3,11 @@
 import json
 import tempfile
 import os
-from typing import Optional
 import torch
 import torchaudio
-from comfy_api.latest import io
 
 
-class SpeechGenerationNode(io.ComfyNode):
+class SpeechGenerationNode:
     """
     Generate speech using OpenAI-compatible TTS API
     
@@ -17,80 +15,63 @@ class SpeechGenerationNode(io.ComfyNode):
     """
     
     @classmethod
-    def define_schema(cls) -> io.Schema:
-        return io.Schema(
-            node_id="SpeechGeneration_AICustomURL",
-            display_name="Generate Speech (AI CustomURL)",
-            category="AI_CustomURL/Speech",
-            inputs=[
-                # API Configuration
-                io.String.Input(
-                    "base_url",
-                    default="https://api.openai.com/v1",
-                    multiline=False,
-                ),
-                io.String.Input(
-                    "api_key",
-                    default="",
-                    multiline=False,
-                ),
-                
-                # Required Parameters (OpenAI spec)
-                io.String.Input(
-                    "model",
-                    default="tts-1",
-                    multiline=False,
-                ),
-                io.String.Input(
-                    "input",
-                    default="",
-                    multiline=True,
-                ),
-                io.String.Input(
-                    "voice",
-                    default="alloy",
-                    multiline=False,
-                ),
-                
-                # Optional Parameters
-                io.Combo.Input(
-                    "response_format",
-                    options=["mp3", "opus", "aac", "flac", "wav", "pcm"],
-                ),
-                io.Float.Input(
-                    "speed",
-                    default=1.0,
-                    min=0.25,
-                    max=4.0,
-                    step=0.01,
-                ),
-                
-                # Advanced parameters (custom JSON)
-                io.String.Input(
-                    "advanced_params_json",
-                    default="",
-                    multiline=False,
-                    optional=True,
-                ),
-            ],
-            outputs=[
-                io.String.Output("audio"),  # AUDIO type
-                io.String.Output("file_path"),
-            ],
-        )
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "base_url": ("STRING", {
+                    "default": "https://api.openai.com/v1",
+                    "multiline": False,
+                }),
+                "api_key": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+                "model": ("STRING", {
+                    "default": "tts-1",
+                    "multiline": False,
+                }),
+                "input": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                }),
+                "voice": ("STRING", {
+                    "default": "alloy",
+                    "multiline": False,
+                }),
+                "response_format": (["mp3", "opus", "aac", "flac", "wav", "pcm"], {
+                    "default": "mp3",
+                }),
+                "speed": ("FLOAT", {
+                    "default": 1.0,
+                    "min": 0.25,
+                    "max": 4.0,
+                    "step": 0.01,
+                }),
+            },
+            "optional": {
+                "advanced_params_json": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+            },
+        }
     
-    @classmethod
-    def execute(
-        cls,
-        base_url: str,
-        api_key: str,
-        model: str,
-        input: str,
-        voice: str,
-        response_format: str,
-        speed: float,
-        advanced_params_json: str = "",
-    ) -> io.NodeOutput:
+    RETURN_TYPES = ("AUDIO", "STRING")
+    RETURN_NAMES = ("audio", "file_path")
+    FUNCTION = "generate_speech"
+    CATEGORY = "AI CustomURL/Speech"
+    
+    def generate_speech(
+        self,
+        base_url,
+        api_key,
+        model,
+        input,
+        voice,
+        response_format,
+        speed,
+        advanced_params_json="",
+    ):
         """Execute speech generation"""
         
         from ..utils.api_client import OpenAIAPIClient
@@ -143,20 +124,20 @@ class SpeechGenerationNode(io.ComfyNode):
                     "sample_rate": sample_rate,
                 }
                 
-                return io.NodeOutput(str(audio_output), temp_file_path)
+                return (audio_output, temp_file_path)
                 
             except Exception as e:
                 print(f"Warning: Failed to load audio with torchaudio: {e}")
                 # Return file path if loading fails
-                return io.NodeOutput("audio_bytes_saved", temp_file_path)
+                return ("audio_bytes_saved", temp_file_path)
             
         except Exception as e:
             error_msg = f"Speech generation failed: {str(e)}"
             print(error_msg)
-            return io.NodeOutput(error_msg, "")
+            return (error_msg, "")
 
 
-class SpeechAdvancedParamsNode(io.ComfyNode):
+class SpeechAdvancedParamsNode:
     """
     Advanced parameters for speech generation
     
@@ -164,62 +145,50 @@ class SpeechAdvancedParamsNode(io.ComfyNode):
     """
     
     @classmethod
-    def define_schema(cls) -> io.Schema:
-        return io.Schema(
-            node_id="SpeechAdvancedParams_AICustomURL",
-            display_name="Speech Advanced Parameters",
-            category="AI_CustomURL/Speech",
-            inputs=[
-                # Voice settings (some APIs)
-                io.Float.Input(
-                    "pitch",
-                    default=1.0,
-                    min=0.5,
-                    max=2.0,
-                    step=0.1,
-                ),
-                io.Float.Input(
-                    "stability",
-                    default=0.5,
-                    min=0.0,
-                    max=1.0,
-                    step=0.1,
-                ),
-                io.Float.Input(
-                    "similarity_boost",
-                    default=0.75,
-                    min=0.0,
-                    max=1.0,
-                    step=0.05,
-                ),
-                
-                # Emotion (some APIs)
-                io.Combo.Input(
-                    "emotion",
-                    options=["neutral", "happy", "sad", "angry", "fearful", "surprised"],
-                ),
-                
-                # Language (some APIs)
-                io.String.Input(
-                    "language",
-                    default="",
-                    multiline=False,
-                ),
-            ],
-            outputs=[
-                io.String.Output("params_json"),
-            ],
-        )
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "pitch": ("FLOAT", {
+                    "default": 1.0,
+                    "min": 0.5,
+                    "max": 2.0,
+                    "step": 0.1,
+                }),
+                "stability": ("FLOAT", {
+                    "default": 0.5,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "step": 0.1,
+                }),
+                "similarity_boost": ("FLOAT", {
+                    "default": 0.75,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "step": 0.05,
+                }),
+                "emotion": (["neutral", "happy", "sad", "angry", "fearful", "surprised"], {
+                    "default": "neutral",
+                }),
+                "language": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+            },
+        }
     
-    @classmethod
-    def execute(
-        cls,
-        pitch: float,
-        stability: float,
-        similarity_boost: float,
-        emotion: str,
-        language: str,
-    ) -> io.NodeOutput:
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("params_json",)
+    FUNCTION = "generate_params"
+    CATEGORY = "AI CustomURL/Speech"
+    
+    def generate_params(
+        self,
+        pitch,
+        stability,
+        similarity_boost,
+        emotion,
+        language,
+    ):
         """Build advanced parameters object"""
         
         params = {}
@@ -244,5 +213,15 @@ class SpeechAdvancedParamsNode(io.ComfyNode):
         if language:
             params["language"] = language
         
-        return io.NodeOutput(json.dumps(params))
+        return (json.dumps(params),)
 
+
+NODE_CLASS_MAPPINGS = {
+    "SpeechGeneration_AICustomURL": SpeechGenerationNode,
+    "SpeechAdvancedParams_AICustomURL": SpeechAdvancedParamsNode,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "SpeechGeneration_AICustomURL": "Generate Speech (AI CustomURL)",
+    "SpeechAdvancedParams_AICustomURL": "Speech Advanced Parameters",
+}

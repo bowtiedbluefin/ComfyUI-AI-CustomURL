@@ -1,12 +1,10 @@
 """Image generation nodes for AI CustomURL"""
 
 import json
-from typing import Optional
 import torch
-from comfy_api.latest import io
 
 
-class ImageGenerationNode(io.ComfyNode):
+class ImageGenerationNode:
     """
     Generate images using OpenAI-compatible image generation API
     
@@ -14,88 +12,69 @@ class ImageGenerationNode(io.ComfyNode):
     """
     
     @classmethod
-    def define_schema(cls) -> io.Schema:
-        return io.Schema(
-            node_id="ImageGeneration_AICustomURL",
-            display_name="Generate Image (AI CustomURL)",
-            category="AI_CustomURL/Image",
-            inputs=[
-                # API Configuration
-                io.String.Input(
-                    "base_url",
-                    default="https://api.openai.com/v1",
-                    multiline=False,
-                ),
-                io.String.Input(
-                    "api_key",
-                    default="",
-                    multiline=False,
-                ),
-                
-                # Required Parameters (OpenAI spec)
-                io.String.Input(
-                    "prompt",
-                    default="",
-                    multiline=True,
-                ),
-                
-                # Optional Parameters
-                io.String.Input(
-                    "model",
-                    default="dall-e-3",
-                    multiline=False,
-                ),
-                io.Int.Input(
-                    "n",
-                    default=1,
-                    min=1,
-                    max=10,
-                ),
-                io.Combo.Input(
-                    "size",
-                    options=["1024x1024", "1024x1792", "1792x1024", "512x512", "256x256"],
-                ),
-                io.Combo.Input(
-                    "quality",
-                    options=["standard", "hd"],
-                ),
-                io.Combo.Input(
-                    "style",
-                    options=["vivid", "natural"],
-                ),
-                io.Combo.Input(
-                    "response_format",
-                    options=["url", "b64_json"],
-                ),
-                
-                # Advanced parameters (custom JSON)
-                io.String.Input(
-                    "advanced_params_json",
-                    default="",
-                    multiline=False,
-                    optional=True,
-                ),
-            ],
-            outputs=[
-                io.Image.Output("images"),
-                io.String.Output("urls"),
-            ],
-        )
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "base_url": ("STRING", {
+                    "default": "https://api.openai.com/v1",
+                    "multiline": False,
+                }),
+                "api_key": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+                "prompt": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                }),
+                "model": ("STRING", {
+                    "default": "dall-e-3",
+                    "multiline": False,
+                }),
+                "n": ("INT", {
+                    "default": 1,
+                    "min": 1,
+                    "max": 10,
+                }),
+                "size": (["1024x1024", "1024x1792", "1792x1024", "512x512", "256x256"], {
+                    "default": "1024x1024",
+                }),
+                "quality": (["standard", "hd"], {
+                    "default": "standard",
+                }),
+                "style": (["vivid", "natural"], {
+                    "default": "vivid",
+                }),
+                "response_format": (["url", "b64_json"], {
+                    "default": "url",
+                }),
+            },
+            "optional": {
+                "advanced_params_json": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+            },
+        }
     
-    @classmethod
-    def execute(
-        cls,
-        base_url: str,
-        api_key: str,
-        prompt: str,
-        model: str,
-        n: int,
-        size: str,
-        quality: str,
-        style: str,
-        response_format: str,
-        advanced_params_json: str = "",
-    ) -> io.NodeOutput:
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("images", "urls")
+    FUNCTION = "generate_image"
+    CATEGORY = "AI CustomURL/Image"
+    
+    def generate_image(
+        self,
+        base_url,
+        api_key,
+        prompt,
+        model,
+        n,
+        size,
+        quality,
+        style,
+        response_format,
+        advanced_params_json="",
+    ):
         """Execute image generation"""
         
         from ..utils.api_client import OpenAIAPIClient
@@ -160,17 +139,17 @@ class ImageGenerationNode(io.ComfyNode):
             
             urls_string = "\n".join(urls)
             
-            return io.NodeOutput(image_batch, urls_string)
+            return (image_batch, urls_string)
             
         except Exception as e:
             error_msg = f"Image generation failed: {str(e)}"
             print(error_msg)
             # Return blank image on error
             blank = create_blank_tensor()
-            return io.NodeOutput(blank, error_msg)
+            return (blank, error_msg)
 
 
-class ImageAdvancedParamsNode(io.ComfyNode):
+class ImageAdvancedParamsNode:
     """
     Advanced parameters for image generation
     
@@ -178,74 +157,62 @@ class ImageAdvancedParamsNode(io.ComfyNode):
     """
     
     @classmethod
-    def define_schema(cls) -> io.Schema:
-        return io.Schema(
-            node_id="ImageAdvancedParams_AICustomURL",
-            display_name="Image Advanced Parameters",
-            category="AI_CustomURL/Image",
-            inputs=[
-                # Custom width/height (some APIs support this)
-                io.Int.Input(
-                    "width",
-                    default=1024,
-                    min=256,
-                    max=2048,
-                    step=64,
-                ),
-                io.Int.Input(
-                    "height",
-                    default=1024,
-                    min=256,
-                    max=2048,
-                    step=64,
-                ),
-                
-                # Common extensions (not in OpenAI spec but supported by many APIs)
-                io.String.Input(
-                    "negative_prompt",
-                    default="",
-                    multiline=True,
-                ),
-                io.Float.Input(
-                    "guidance_scale",
-                    default=7.5,
-                    min=1.0,
-                    max=20.0,
-                    step=0.5,
-                ),
-                io.Int.Input(
-                    "steps",
-                    default=50,
-                    min=1,
-                    max=150,
-                ),
-                io.Int.Input(
-                    "seed",
-                    default=-1,
-                    min=-1,
-                    max=2147483647,
-                ),
-                io.Combo.Input(
-                    "sampler",
-                    options=["none", "euler", "euler_a", "ddim", "ddpm", "dpm++"],
-                ),
-            ],
-            outputs=[
-                io.String.Output("params_json"),
-            ],
-        )
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "width": ("INT", {
+                    "default": 1024,
+                    "min": 256,
+                    "max": 2048,
+                    "step": 64,
+                }),
+                "height": ("INT", {
+                    "default": 1024,
+                    "min": 256,
+                    "max": 2048,
+                    "step": 64,
+                }),
+                "negative_prompt": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                }),
+                "guidance_scale": ("FLOAT", {
+                    "default": 7.5,
+                    "min": 1.0,
+                    "max": 20.0,
+                    "step": 0.5,
+                }),
+                "steps": ("INT", {
+                    "default": 50,
+                    "min": 1,
+                    "max": 150,
+                }),
+                "seed": ("INT", {
+                    "default": -1,
+                    "min": -1,
+                    "max": 2147483647,
+                }),
+                "sampler": (["none", "euler", "euler_a", "ddim", "ddpm", "dpm++"], {
+                    "default": "none",
+                }),
+            },
+        }
     
-    @classmethod
-    def execute(
-        cls,
-        width: int,
-        height: int,
-        negative_prompt: str,
-        guidance_scale: float,
-        steps: int,
-        seed: int,
-        sampler: str,
-    ) -> io.NodeOutput:
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("params_json",)
+    FUNCTION = "generate_params"
+    CATEGORY = "AI CustomURL/Image"
+    
+    def generate_params(
+        self,
+        width,
+        height,
+        negative_prompt,
+        guidance_scale,
+        steps,
+        seed,
+        sampler,
+    ):
         """Build advanced parameters object"""
         
         params = {}
@@ -278,5 +245,15 @@ class ImageAdvancedParamsNode(io.ComfyNode):
             params["sampler"] = sampler
             params["scheduler"] = sampler  # Alternative name
         
-        return io.NodeOutput(json.dumps(params))
+        return (json.dumps(params),)
 
+
+NODE_CLASS_MAPPINGS = {
+    "ImageGeneration_AICustomURL": ImageGenerationNode,
+    "ImageAdvancedParams_AICustomURL": ImageAdvancedParamsNode,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "ImageGeneration_AICustomURL": "Generate Image (AI CustomURL)",
+    "ImageAdvancedParams_AICustomURL": "Image Advanced Parameters",
+}

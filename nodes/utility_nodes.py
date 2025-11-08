@@ -1,128 +1,113 @@
 """Utility nodes for URL loading and data conversion"""
 
 import torch
-from comfy_api.latest import io
 
 
-class ImageURLLoaderNode(io.ComfyNode):
+class ImageURLLoaderNode:
     """
     Load image from URL
     """
     
     @classmethod
-    def define_schema(cls) -> io.Schema:
-        return io.Schema(
-            node_id="ImageURLLoader_AICustomURL",
-            display_name="Load Image from URL",
-            category="AI_CustomURL/Utility",
-            inputs=[
-                io.String.Input(
-                    "url",
-                    default="",
-                    multiline=False,
-                ),
-            ],
-            outputs=[
-                io.Image.Output("image"),
-                io.String.Output("status"),
-            ],
-        )
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "url": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+            },
+        }
     
-    @classmethod
-    def execute(cls, url: str) -> io.NodeOutput:
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("image", "status")
+    FUNCTION = "load_image"
+    CATEGORY = "AI CustomURL/Utility"
+    
+    def load_image(self, url):
         """Load image from URL"""
         
         from ..utils.converters import url_to_tensor, create_blank_tensor
         
         try:
             image = url_to_tensor(url)
-            return io.NodeOutput(image, f"Loaded image from {url}")
+            return (image, f"Loaded image from {url}")
             
         except Exception as e:
             error_msg = f"Failed to load image: {str(e)}"
             print(error_msg)
             blank = create_blank_tensor()
-            return io.NodeOutput(blank, error_msg)
+            return (blank, error_msg)
 
 
-class VideoURLLoaderNode(io.ComfyNode):
+class VideoURLLoaderNode:
     """
     Load video from URL and convert to image frames
     """
     
     @classmethod
-    def define_schema(cls) -> io.Schema:
-        return io.Schema(
-            node_id="VideoURLLoader_AICustomURL",
-            display_name="Load Video from URL",
-            category="AI_CustomURL/Utility",
-            inputs=[
-                io.String.Input(
-                    "url",
-                    default="",
-                    multiline=False,
-                ),
-                io.Int.Input(
-                    "start_frame",
-                    default=0,
-                    min=0,
-                    max=10000,
-                ),
-                io.Int.Input(
-                    "frame_count",
-                    default=0,
-                    min=0,
-                    max=10000,
-                ),
-                io.Int.Input(
-                    "skip_frames",
-                    default=1,
-                    min=1,
-                    max=100,
-                ),
-                io.Combo.Input(
-                    "resize_mode",
-                    options=["none", "fit", "fill"],
-                ),
-                io.Int.Input(
-                    "target_width",
-                    default=512,
-                    min=64,
-                    max=4096,
-                    step=64,
-                ),
-                io.Int.Input(
-                    "target_height",
-                    default=512,
-                    min=64,
-                    max=4096,
-                    step=64,
-                ),
-            ],
-            outputs=[
-                io.Image.Output("frames"),
-                io.String.Output("info"),
-            ],
-        )
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "url": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+                "start_frame": ("INT", {
+                    "default": 0,
+                    "min": 0,
+                    "max": 10000,
+                }),
+                "frame_count": ("INT", {
+                    "default": 0,
+                    "min": 0,
+                    "max": 10000,
+                }),
+                "skip_frames": ("INT", {
+                    "default": 1,
+                    "min": 1,
+                    "max": 100,
+                }),
+                "resize_mode": (["none", "fit", "fill"], {
+                    "default": "none",
+                }),
+                "target_width": ("INT", {
+                    "default": 512,
+                    "min": 64,
+                    "max": 4096,
+                    "step": 64,
+                }),
+                "target_height": ("INT", {
+                    "default": 512,
+                    "min": 64,
+                    "max": 4096,
+                    "step": 64,
+                }),
+            },
+        }
     
-    @classmethod
-    def execute(
-        cls,
-        url: str,
-        start_frame: int,
-        frame_count: int,
-        skip_frames: int,
-        resize_mode: str,
-        target_width: int,
-        target_height: int,
-    ) -> io.NodeOutput:
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("frames", "info")
+    FUNCTION = "load_video"
+    CATEGORY = "AI CustomURL/Utility"
+    
+    def load_video(
+        self,
+        url,
+        start_frame,
+        frame_count,
+        skip_frames,
+        resize_mode,
+        target_width,
+        target_height,
+    ):
         """Load video from URL"""
         
         import tempfile
         import os
         import requests
         import cv2
-        from utils.converters import create_blank_tensor
+        from ..utils.converters import create_blank_tensor
         
         try:
             # Download video to temporary file
@@ -206,14 +191,24 @@ class VideoURLLoaderNode(io.ComfyNode):
                 # Stack frames
                 frames_tensor = torch.stack(frames)
                 info = f"Loaded {loaded_count} frames from video ({width}x{height} @ {fps}fps)"
-                return io.NodeOutput(frames_tensor, info)
+                return (frames_tensor, info)
             else:
                 blank = create_blank_tensor()
-                return io.NodeOutput(blank, "No frames loaded")
+                return (blank, "No frames loaded")
             
         except Exception as e:
             error_msg = f"Failed to load video: {str(e)}"
             print(error_msg)
             blank = create_blank_tensor()
-            return io.NodeOutput(blank, error_msg)
+            return (blank, error_msg)
 
+
+NODE_CLASS_MAPPINGS = {
+    "ImageURLLoader_AICustomURL": ImageURLLoaderNode,
+    "VideoURLLoader_AICustomURL": VideoURLLoaderNode,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "ImageURLLoader_AICustomURL": "Load Image from URL",
+    "VideoURLLoader_AICustomURL": "Load Video from URL",
+}

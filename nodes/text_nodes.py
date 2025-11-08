@@ -2,10 +2,9 @@
 
 import json
 from typing import Optional
-from comfy_api.latest import io
 
 
-class TextGenerationNode(io.ComfyNode):
+class TextGenerationNode:
     """
     Generate text using OpenAI-compatible chat completion API
     
@@ -13,80 +12,68 @@ class TextGenerationNode(io.ComfyNode):
     """
     
     @classmethod
-    def define_schema(cls) -> io.Schema:
-        return io.Schema(
-            node_id="TextGeneration_AICustomURL",
-            display_name="Generate Text (AI CustomURL)",
-            category="AI_CustomURL/Text",
-            inputs=[
-                # API Configuration
-                io.String.Input(
-                    "base_url",
-                    default="https://api.openai.com/v1",
-                    multiline=False,
-                ),
-                io.String.Input(
-                    "api_key",
-                    default="",
-                    multiline=False,
-                ),
-                
-                # Required Parameters (OpenAI spec)
-                io.String.Input(
-                    "model",
-                    default="gpt-4o",
-                    multiline=False,
-                ),
-                io.String.Input(
-                    "prompt",
-                    default="",
-                    multiline=True,
-                ),
-                
-                # Common Optional Parameters
-                io.String.Input(
-                    "system_prompt",
-                    default="You are a helpful assistant.",
-                    multiline=True,
-                ),
-                io.Float.Input(
-                    "temperature",
-                    default=1.0,
-                    min=0.0,
-                    max=2.0,
-                    step=0.1,
-                ),
-                io.Int.Input(
-                    "max_tokens",
-                    default=1024,
-                    min=1,
-                    max=128000,
-                    step=1,
-                ),
-                
-                # Optional Inputs
-                io.Image.Input("image", optional=True),  # For vision models
-                io.String.Input("advanced_params_json", default="", multiline=False, optional=True),
-            ],
-            outputs=[
-                io.String.Output("text"),
-                io.String.Output("full_response"),
-            ],
-        )
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "base_url": ("STRING", {
+                    "default": "https://api.openai.com/v1",
+                    "multiline": False,
+                }),
+                "api_key": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+                "model": ("STRING", {
+                    "default": "gpt-4o",
+                    "multiline": False,
+                }),
+                "prompt": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                }),
+                "system_prompt": ("STRING", {
+                    "default": "You are a helpful assistant.",
+                    "multiline": True,
+                }),
+                "temperature": ("FLOAT", {
+                    "default": 1.0,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "step": 0.1,
+                }),
+                "max_tokens": ("INT", {
+                    "default": 1024,
+                    "min": 1,
+                    "max": 128000,
+                    "step": 1,
+                }),
+            },
+            "optional": {
+                "image": ("IMAGE",),
+                "advanced_params_json": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+            },
+        }
     
-    @classmethod
-    def execute(
-        cls,
-        base_url: str,
-        api_key: str,
-        model: str,
-        prompt: str,
-        system_prompt: str,
-        temperature: float,
-        max_tokens: int,
-        image: Optional[object] = None,
-        advanced_params_json: str = "",
-    ) -> io.NodeOutput:
+    RETURN_TYPES = ("STRING", "STRING")
+    RETURN_NAMES = ("text", "full_response")
+    FUNCTION = "generate_text"
+    CATEGORY = "AI CustomURL/Text"
+    
+    def generate_text(
+        self,
+        base_url,
+        api_key,
+        model,
+        prompt,
+        system_prompt,
+        temperature,
+        max_tokens,
+        image=None,
+        advanced_params_json="",
+    ):
         """Execute text generation"""
         
         from ..utils.api_client import OpenAIAPIClient
@@ -139,98 +126,86 @@ class TextGenerationNode(io.ComfyNode):
             text_response = response["choices"][0]["message"]["content"]
             full_response = json.dumps(response, indent=2)
             
-            return io.NodeOutput(text_response, full_response)
+            return (text_response, full_response)
             
         except Exception as e:
             error_msg = f"Text generation failed: {str(e)}"
             print(error_msg)
-            return io.NodeOutput(error_msg, str(e))
+            return (error_msg, str(e))
 
 
-class TextAdvancedParamsNode(io.ComfyNode):
+class TextAdvancedParamsNode:
     """
     Advanced parameters for text generation (OpenAI API spec)
     """
     
     @classmethod
-    def define_schema(cls) -> io.Schema:
-        return io.Schema(
-            node_id="TextAdvancedParams_AICustomURL",
-            display_name="Text Advanced Parameters",
-            category="AI_CustomURL/Text",
-            inputs=[
-                # OpenAI standard optional parameters
-                io.Float.Input(
-                    "top_p",
-                    default=1.0,
-                    min=0.0,
-                    max=1.0,
-                    step=0.01,
-                ),
-                io.Float.Input(
-                    "frequency_penalty",
-                    default=0.0,
-                    min=-2.0,
-                    max=2.0,
-                    step=0.1,
-                ),
-                io.Float.Input(
-                    "presence_penalty",
-                    default=0.0,
-                    min=-2.0,
-                    max=2.0,
-                    step=0.1,
-                ),
-                io.Int.Input(
-                    "seed",
-                    default=-1,
-                    min=-1,
-                    max=2147483647,
-                ),
-                io.String.Input(
-                    "stop_sequences",
-                    default="",
-                    multiline=False,
-                ),
-                io.Combo.Input(
-                    "response_format",
-                    options=["text", "json_object"],
-                ),
-                io.Int.Input(
-                    "n",
-                    default=1,
-                    min=1,
-                    max=10,
-                ),
-                io.Combo.Input(
-                    "enable_logprobs",
-                    options=["false", "true"],
-                ),
-                io.Int.Input(
-                    "top_logprobs",
-                    default=0,
-                    min=0,
-                    max=20,
-                ),
-            ],
-            outputs=[
-                io.String.Output("params_json"),
-            ],
-        )
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "top_p": ("FLOAT", {
+                    "default": 1.0,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "step": 0.01,
+                }),
+                "frequency_penalty": ("FLOAT", {
+                    "default": 0.0,
+                    "min": -2.0,
+                    "max": 2.0,
+                    "step": 0.1,
+                }),
+                "presence_penalty": ("FLOAT", {
+                    "default": 0.0,
+                    "min": -2.0,
+                    "max": 2.0,
+                    "step": 0.1,
+                }),
+                "seed": ("INT", {
+                    "default": -1,
+                    "min": -1,
+                    "max": 2147483647,
+                }),
+                "stop_sequences": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+                "response_format": (["text", "json_object"], {
+                    "default": "text",
+                }),
+                "n": ("INT", {
+                    "default": 1,
+                    "min": 1,
+                    "max": 10,
+                }),
+                "enable_logprobs": (["false", "true"], {
+                    "default": "false",
+                }),
+                "top_logprobs": ("INT", {
+                    "default": 0,
+                    "min": 0,
+                    "max": 20,
+                }),
+            },
+        }
     
-    @classmethod
-    def execute(
-        cls,
-        top_p: float,
-        frequency_penalty: float,
-        presence_penalty: float,
-        seed: int,
-        stop_sequences: str,
-        response_format: str,
-        n: int,
-        enable_logprobs: str,
-        top_logprobs: int,
-    ) -> io.NodeOutput:
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("params_json",)
+    FUNCTION = "generate_params"
+    CATEGORY = "AI CustomURL/Text"
+    
+    def generate_params(
+        self,
+        top_p,
+        frequency_penalty,
+        presence_penalty,
+        seed,
+        stop_sequences,
+        response_format,
+        n,
+        enable_logprobs,
+        top_logprobs,
+    ):
         """Build advanced parameters object"""
         
         params = {}
@@ -265,5 +240,15 @@ class TextAdvancedParamsNode(io.ComfyNode):
             if top_logprobs > 0:
                 params["top_logprobs"] = top_logprobs
         
-        return io.NodeOutput(json.dumps(params))
+        return (json.dumps(params),)
 
+
+NODE_CLASS_MAPPINGS = {
+    "TextGeneration_AICustomURL": TextGenerationNode,
+    "TextAdvancedParams_AICustomURL": TextAdvancedParamsNode,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "TextGeneration_AICustomURL": "Generate Text (AI CustomURL)",
+    "TextAdvancedParams_AICustomURL": "Text Advanced Parameters",
+}
