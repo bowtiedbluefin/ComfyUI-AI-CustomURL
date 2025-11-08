@@ -4,35 +4,68 @@ ComfyUI AI CustomURL Extension
 Traditional ComfyUI node format for maximum compatibility.
 """
 
-# Import all node mappings
-from .nodes.text_nodes import NODE_CLASS_MAPPINGS as TEXT_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as TEXT_DISPLAY
-from .nodes.image_nodes import NODE_CLASS_MAPPINGS as IMAGE_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as IMAGE_DISPLAY
-from .nodes.video_nodes import NODE_CLASS_MAPPINGS as VIDEO_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as VIDEO_DISPLAY
-from .nodes.speech_nodes import NODE_CLASS_MAPPINGS as SPEECH_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as SPEECH_DISPLAY
-from .nodes.utility_nodes import NODE_CLASS_MAPPINGS as UTILITY_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as UTILITY_DISPLAY
+import traceback
 
-# Combine all mappings
-NODE_CLASS_MAPPINGS = {
-    **TEXT_MAPPINGS,
-    **IMAGE_MAPPINGS,
-    **VIDEO_MAPPINGS,
-    **SPEECH_MAPPINGS,
-    **UTILITY_MAPPINGS,
-}
+# Initialize empty mappings
+NODE_CLASS_MAPPINGS = {}
+NODE_DISPLAY_NAME_MAPPINGS = {}
 
-NODE_DISPLAY_NAME_MAPPINGS = {
-    **TEXT_DISPLAY,
-    **IMAGE_DISPLAY,
-    **VIDEO_DISPLAY,
-    **SPEECH_DISPLAY,
-    **UTILITY_DISPLAY,
-}
+try:
+    # Import all node mappings
+    from .nodes.text_nodes import NODE_CLASS_MAPPINGS as TEXT_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as TEXT_DISPLAY
+    NODE_CLASS_MAPPINGS.update(TEXT_MAPPINGS)
+    NODE_DISPLAY_NAME_MAPPINGS.update(TEXT_DISPLAY)
+    print(f"[AI CustomURL] Loaded {len(TEXT_MAPPINGS)} text nodes")
+except Exception as e:
+    print(f"[AI CustomURL] ERROR loading text_nodes: {e}")
+    traceback.print_exc()
+
+try:
+    from .nodes.image_nodes import NODE_CLASS_MAPPINGS as IMAGE_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as IMAGE_DISPLAY
+    NODE_CLASS_MAPPINGS.update(IMAGE_MAPPINGS)
+    NODE_DISPLAY_NAME_MAPPINGS.update(IMAGE_DISPLAY)
+    print(f"[AI CustomURL] Loaded {len(IMAGE_MAPPINGS)} image nodes")
+except Exception as e:
+    print(f"[AI CustomURL] ERROR loading image_nodes: {e}")
+    traceback.print_exc()
+
+try:
+    from .nodes.video_nodes import NODE_CLASS_MAPPINGS as VIDEO_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as VIDEO_DISPLAY
+    NODE_CLASS_MAPPINGS.update(VIDEO_MAPPINGS)
+    NODE_DISPLAY_NAME_MAPPINGS.update(VIDEO_DISPLAY)
+    print(f"[AI CustomURL] Loaded {len(VIDEO_MAPPINGS)} video nodes")
+except Exception as e:
+    print(f"[AI CustomURL] ERROR loading video_nodes: {e}")
+    traceback.print_exc()
+
+try:
+    from .nodes.speech_nodes import NODE_CLASS_MAPPINGS as SPEECH_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as SPEECH_DISPLAY
+    NODE_CLASS_MAPPINGS.update(SPEECH_MAPPINGS)
+    NODE_DISPLAY_NAME_MAPPINGS.update(SPEECH_DISPLAY)
+    print(f"[AI CustomURL] Loaded {len(SPEECH_MAPPINGS)} speech nodes")
+except Exception as e:
+    print(f"[AI CustomURL] ERROR loading speech_nodes: {e}")
+    traceback.print_exc()
+
+try:
+    from .nodes.utility_nodes import NODE_CLASS_MAPPINGS as UTILITY_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as UTILITY_DISPLAY
+    NODE_CLASS_MAPPINGS.update(UTILITY_MAPPINGS)
+    NODE_DISPLAY_NAME_MAPPINGS.update(UTILITY_DISPLAY)
+    print(f"[AI CustomURL] Loaded {len(UTILITY_MAPPINGS)} utility nodes")
+except Exception as e:
+    print(f"[AI CustomURL] ERROR loading utility_nodes: {e}")
+    traceback.print_exc()
 
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
 
 print("=" * 60)
-print("AI CustomURL Extension Loaded")
+print(f"AI CustomURL Extension Loaded: {len(NODE_CLASS_MAPPINGS)} total nodes")
 print("=" * 60)
-print("Nodes: Text, Image, Video, Speech Generation + Utilities")
-print("Compatible with: OpenAI, Venice.ai, OpenRouter, Together.ai, Ollama")
-print("=" * 60)
+if NODE_CLASS_MAPPINGS:
+    print("Available nodes:")
+    for node_id in NODE_CLASS_MAPPINGS.keys():
+        print(f"  - {node_id}")
+    print("=" * 60)
+else:
+    print("WARNING: No nodes were loaded! Check errors above.")
+    print("=" * 60)
