@@ -2,6 +2,7 @@
 ComfyUI AI CustomURL Extension
 
 Traditional ComfyUI node format for maximum compatibility.
+Users manually enter API URLs and model names.
 """
 
 import traceback
