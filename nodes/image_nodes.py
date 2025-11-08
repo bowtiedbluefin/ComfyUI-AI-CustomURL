@@ -60,7 +60,7 @@ class ImageGenerationNode:
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("images", "urls")
     FUNCTION = "generate_image"
-    CATEGORY = "AI CustomURL/Image"
+    CATEGORY = "ai_customurl"
     
     def generate_image(
         self,
@@ -201,7 +201,7 @@ class ImageAdvancedParamsNode:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("params_json",)
     FUNCTION = "generate_params"
-    CATEGORY = "AI CustomURL/Image"
+    CATEGORY = "ai_customurl"
     
     def generate_params(
         self,

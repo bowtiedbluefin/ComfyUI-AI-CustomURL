@@ -59,7 +59,7 @@ class SpeechGenerationNode:
     RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "file_path")
     FUNCTION = "generate_speech"
-    CATEGORY = "AI CustomURL/Speech"
+    CATEGORY = "ai_customurl"
     
     def generate_speech(
         self,
@@ -179,7 +179,7 @@ class SpeechAdvancedParamsNode:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("params_json",)
     FUNCTION = "generate_params"
-    CATEGORY = "AI CustomURL/Speech"
+    CATEGORY = "ai_customurl"
     
     def generate_params(
         self,

@@ -59,7 +59,7 @@ class VideoGenerationNode:
     RETURN_TYPES = ("STRING", "STRING")
     RETURN_NAMES = ("video_url", "response_json")
     FUNCTION = "generate_video"
-    CATEGORY = "AI CustomURL/Video"
+    CATEGORY = "ai_customurl"
     
     def generate_video(
         self,
@@ -187,7 +187,7 @@ class VideoAdvancedParamsNode:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("params_json",)
     FUNCTION = "generate_params"
-    CATEGORY = "AI CustomURL/Video"
+    CATEGORY = "ai_customurl"
     
     def generate_params(
         self,

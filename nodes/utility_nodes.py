@@ -22,7 +22,7 @@ class ImageURLLoaderNode:
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("image", "status")
     FUNCTION = "load_image"
-    CATEGORY = "AI CustomURL/Utility"
+    CATEGORY = "ai_customurl"
     
     def load_image(self, url):
         """Load image from URL"""
@@ -89,7 +89,7 @@ class VideoURLLoaderNode:
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("frames", "info")
     FUNCTION = "load_video"
-    CATEGORY = "AI CustomURL/Utility"
+    CATEGORY = "ai_customurl"
     
     def load_video(
         self,

@@ -60,7 +60,7 @@ class TextGenerationNode:
     RETURN_TYPES = ("STRING", "STRING")
     RETURN_NAMES = ("text", "full_response")
     FUNCTION = "generate_text"
-    CATEGORY = "AI CustomURL/Text"
+    CATEGORY = "ai_customurl"
     
     def generate_text(
         self,
@@ -192,7 +192,7 @@ class TextAdvancedParamsNode:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("params_json",)
     FUNCTION = "generate_params"
-    CATEGORY = "AI CustomURL/Text"
+    CATEGORY = "ai_customurl"
     
     def generate_params(
         self,
