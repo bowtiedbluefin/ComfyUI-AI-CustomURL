@@ -211,7 +211,7 @@ class OpenAIAPIClient:
             **params: Optional parameters:
                 OpenAI format:
                 - size (str): Video resolution e.g., "1920x1080", "720x1280"
-                - seconds (int): Duration as integer e.g., 5, 10
+                - seconds (str): Duration as string, must be "4", "8", or "12"
                 - image (str): Base64 data URL for image-to-video
                 
                 Other APIs may support JSON format with:

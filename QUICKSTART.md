@@ -114,14 +114,16 @@ models:
    prompt: A cat playing with a ball of yarn
    resolution: 1080p
    aspect_ratio: 16:9
-   duration: 5
+   duration: 4
    fps: 24
    ```
 3. Execute → Get your generated video URL!
 
 **Note**: The node automatically converts parameters to OpenAI's format:
 - `resolution` + `aspect_ratio` → `size` (e.g., "1920x1080")
-- `duration` (integer) → `seconds` (e.g., 5)
+- `duration` → `seconds` as string ("4", "8", or "12" only)
+  - If you enter 5, it will round to the nearest valid value (4)
+  - OpenAI only supports 4, 8, or 12 second videos
 - `fps` is filtered out (not supported by OpenAI)
 - For image-to-video, connect an image input → `image` parameter
 

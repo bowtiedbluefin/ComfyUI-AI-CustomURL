@@ -23,7 +23,7 @@ class VideoGenerationNode:
                     "multiline": False,
                 }),
                 "model": ("STRING", {
-                    "default": "sora-1.0",
+                    "default": "sora-2",
                     "multiline": False,
                 }),
                 "prompt": ("STRING", {
@@ -34,7 +34,7 @@ class VideoGenerationNode:
                     "default": "1080p",
                 }),
                 "duration": ("INT", {
-                    "default": 5,
+                    "default": 4,
                     "min": 1,
                     "max": 60,
                 }),
@@ -103,10 +103,23 @@ class VideoGenerationNode:
             }
             
             # Build parameters in OpenAI format
-            params = {
-                "size": size_mapping.get((resolution, aspect_ratio), "1920x1080"),
-                "seconds": duration,  # OpenAI expects integer like 5
-            }
+            # OpenAI only accepts specific values for seconds: "4", "8", or "12"
+            if "openai.com" in base_url:
+                valid_seconds = ["4", "8", "12"]
+                closest_seconds = min(valid_seconds, key=lambda x: abs(int(x) - duration))
+                if int(closest_seconds) != duration:
+                    print(f"[INFO] OpenAI only supports 4, 8, or 12 second videos. Converting {duration}s → {closest_seconds}s")
+                
+                params = {
+                    "size": size_mapping.get((resolution, aspect_ratio), "1920x1080"),
+                    "seconds": closest_seconds,  # OpenAI expects string: "4", "8", or "12"
+                }
+            else:
+                # Other APIs may support different formats
+                params = {
+                    "size": size_mapping.get((resolution, aspect_ratio), "1920x1080"),
+                    "seconds": duration,
+                }
             
             # Note: OpenAI doesn't support fps directly, but keep for other APIs
             # Only add if specified in advanced params or if not using OpenAI
