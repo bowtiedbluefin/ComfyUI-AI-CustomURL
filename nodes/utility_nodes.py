@@ -1,6 +1,11 @@
 """Utility nodes for URL loading and data conversion"""
 
 import torch
+import os
+import requests
+import tempfile
+import shutil
+from datetime import datetime
 
 
 class ImageURLLoaderNode:
@@ -203,12 +208,90 @@ class VideoURLLoaderNode:
             return (blank, error_msg)
 
 
+class SaveVideoNode:
+    """
+    Download and save video from URL to local filesystem
+    """
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "video_url": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+                "filename": ("STRING", {
+                    "default": "video_{timestamp}",
+                    "multiline": False,
+                }),
+                "output_folder": ("STRING", {
+                    "default": "output/videos",
+                    "multiline": False,
+                }),
+            },
+        }
+    
+    RETURN_TYPES = ("STRING", "STRING")
+    RETURN_NAMES = ("filepath", "status")
+    FUNCTION = "save_video"
+    CATEGORY = "ai_customurl"
+    OUTPUT_NODE = True
+    
+    def save_video(self, video_url, filename, output_folder):
+        """Download and save video from URL"""
+        
+        try:
+            if not video_url or video_url.startswith("error:"):
+                return ("", f"Invalid video URL: {video_url}")
+            
+            # Replace {timestamp} placeholder
+            if "{timestamp}" in filename:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = filename.replace("{timestamp}", timestamp)
+            
+            # Ensure filename has extension
+            if not filename.endswith((".mp4", ".webm", ".mov", ".avi")):
+                filename += ".mp4"
+            
+            # Create output directory if it doesn't exist
+            os.makedirs(output_folder, exist_ok=True)
+            
+            # Full output path
+            output_path = os.path.join(output_folder, filename)
+            
+            # Download video
+            print(f"Downloading video from: {video_url}")
+            response = requests.get(video_url, stream=True, timeout=300)
+            response.raise_for_status()
+            
+            # Save to file
+            with open(output_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            
+            # Get file size
+            file_size_mb = os.path.getsize(output_path) / (1024 * 1024)
+            
+            success_msg = f"Video saved successfully: {output_path} ({file_size_mb:.2f} MB)"
+            print(success_msg)
+            
+            return (output_path, success_msg)
+            
+        except Exception as e:
+            error_msg = f"Failed to save video: {str(e)}"
+            print(error_msg)
+            return ("", error_msg)
+
+
 NODE_CLASS_MAPPINGS = {
     "ImageURLLoader_AICustomURL": ImageURLLoaderNode,
     "VideoURLLoader_AICustomURL": VideoURLLoaderNode,
+    "SaveVideo_AICustomURL": SaveVideoNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ImageURLLoader_AICustomURL": "Load Image from URL",
     "VideoURLLoader_AICustomURL": "Load Video from URL",
+    "SaveVideo_AICustomURL": "Save Video from URL",
 }

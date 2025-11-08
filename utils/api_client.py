@@ -209,12 +209,18 @@ class OpenAIAPIClient:
             model: Model identifier (required)
             prompt: Video description (required)
             **params: Optional parameters:
+                OpenAI format:
+                - size (str): Video resolution e.g., "1920x1080", "720x1280"
+                - seconds (str): Duration as string e.g., "5s", "10s"
+                - input_reference (str): Data URL for image-to-video
+                - quality (str): "standard" (default)
+                
+                Other APIs may support:
                 - duration (int): Video duration in seconds
                 - resolution (str): Video resolution
                 - fps (int): Frames per second
                 - aspect_ratio (str): e.g., "16:9", "9:16", "1:1"
                 - image_url (str): For image-to-video
-                - etc.
                 
         Returns:
             Video generation response object

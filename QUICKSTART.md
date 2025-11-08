@@ -103,6 +103,42 @@ models:
    ```
 3. Execute → Get your generated image!
 
+## 🎯 Example: Video Generation with OpenAI
+
+1. Add "Generate Video (AI CustomURL)" node
+2. Fill in:
+   ```
+   base_url: https://api.openai.com/v1
+   api_key: sk-proj-YOUR_KEY_HERE
+   model: sora-2
+   prompt: A cat playing with a ball of yarn
+   resolution: 1080p
+   aspect_ratio: 16:9
+   duration: 5
+   fps: 24
+   ```
+3. Execute → Get your generated video URL!
+
+**Note**: The node automatically converts parameters to OpenAI's format:
+- `resolution` + `aspect_ratio` → `size` (e.g., "1920x1080")
+- `duration` → `seconds` (e.g., "5s")
+- For image-to-video, connect an image input → `input_reference`
+
+### 💾 Saving Video Locally
+
+To download and save the generated video:
+
+1. Add "Save Video from URL" node
+2. Connect the `video_url` output from "Generate Video" → `video_url` input
+3. Configure save settings:
+   ```
+   filename: my_video_{timestamp}
+   output_folder: output/videos
+   ```
+4. Execute → Video downloads to your local folder!
+
+The `{timestamp}` placeholder automatically adds a unique timestamp to each file.
+
 ## 🎯 Example: Using Advanced Parameters
 
 1. Add "Text Advanced Parameters" node

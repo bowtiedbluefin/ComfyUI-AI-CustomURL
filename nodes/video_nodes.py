@@ -82,19 +82,48 @@ class VideoGenerationNode:
         try:
             client = OpenAIAPIClient(base_url, api_key)
             
-            # Build parameters
-            params = {
-                "resolution": resolution,
-                "duration": duration,
-                "fps": fps,
-                "aspect_ratio": aspect_ratio,
+            # Convert parameters to OpenAI format
+            # Map resolution + aspect_ratio to OpenAI's "size" parameter
+            size_mapping = {
+                ("1080p", "16:9"): "1920x1080",
+                ("1080p", "9:16"): "1080x1920",
+                ("1080p", "1:1"): "1080x1080",
+                ("1080p", "4:3"): "1440x1080",
+                ("1080p", "21:9"): "2560x1080",
+                ("720p", "16:9"): "1280x720",
+                ("720p", "9:16"): "720x1280",
+                ("720p", "1:1"): "720x720",
+                ("720p", "4:3"): "960x720",
+                ("720p", "21:9"): "1680x720",
+                ("480p", "16:9"): "854x480",
+                ("480p", "9:16"): "480x854",
+                ("480p", "1:1"): "480x480",
+                ("480p", "4:3"): "640x480",
+                ("480p", "21:9"): "1120x480",
             }
+            
+            # Build parameters in OpenAI format
+            params = {
+                "size": size_mapping.get((resolution, aspect_ratio), "1920x1080"),
+                "seconds": f"{duration}s",  # OpenAI expects string like "5s"
+            }
+            
+            # Note: OpenAI doesn't support fps directly, but keep for other APIs
+            # Only add if specified in advanced params or if not using OpenAI
+            if "openai.com" not in base_url:
+                params["fps"] = fps
+                params["resolution"] = resolution
+                params["aspect_ratio"] = aspect_ratio
             
             # Add image for image-to-video if provided
             if image is not None:
                 # Convert image to base64 data URL
                 base64_img = image_to_base64(image)
-                params["image_url"] = f"data:image/png;base64,{base64_img}"
+                # OpenAI uses "input_reference" for image-to-video
+                if "openai.com" in base_url:
+                    params["input_reference"] = f"data:image/png;base64,{base64_img}"
+                else:
+                    params["image_url"] = f"data:image/png;base64,{base64_img}"
             
             # Merge advanced parameters if provided
             if advanced_params_json:
