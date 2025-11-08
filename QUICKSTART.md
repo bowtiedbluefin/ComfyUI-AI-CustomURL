@@ -121,7 +121,8 @@ models:
 
 **Note**: The node automatically converts parameters to OpenAI's format:
 - `resolution` + `aspect_ratio` → `size` (e.g., "1920x1080")
-- `duration` → `seconds` (e.g., "5s")
+- `duration` (integer) → `seconds` (e.g., 5)
+- `fps` is filtered out (not supported by OpenAI)
 - For image-to-video, connect an image input → `input_reference`
 
 ### 💾 Saving Video Locally

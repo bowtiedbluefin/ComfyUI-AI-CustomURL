@@ -105,7 +105,7 @@ class VideoGenerationNode:
             # Build parameters in OpenAI format
             params = {
                 "size": size_mapping.get((resolution, aspect_ratio), "1920x1080"),
-                "seconds": f"{duration}s",  # OpenAI expects string like "5s"
+                "seconds": duration,  # OpenAI expects integer like 5
             }
             
             # Note: OpenAI doesn't support fps directly, but keep for other APIs

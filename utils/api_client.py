@@ -211,9 +211,8 @@ class OpenAIAPIClient:
             **params: Optional parameters:
                 OpenAI format:
                 - size (str): Video resolution e.g., "1920x1080", "720x1280"
-                - seconds (str): Duration as string e.g., "5s", "10s"
+                - seconds (int): Duration as integer e.g., 5, 10
                 - input_reference (str): Data URL for image-to-video
-                - quality (str): "standard" (default)
                 
                 Other APIs may support:
                 - duration (int): Video duration in seconds
@@ -231,7 +230,7 @@ class OpenAIAPIClient:
             **params
         }
         
-        return self._request("POST", "/videos/create", json=data)
+        return self._request("POST", "/videos/generations", json=data)
     
     def generate_speech(
         self,
