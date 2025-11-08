@@ -83,24 +83,50 @@ class VideoGenerationNode:
             client = OpenAIAPIClient(base_url, api_key)
             
             # Convert parameters to OpenAI format
-            # Map resolution + aspect_ratio to OpenAI's "size" parameter
-            size_mapping = {
-                ("1080p", "16:9"): "1920x1080",
-                ("1080p", "9:16"): "1080x1920",
-                ("1080p", "1:1"): "1080x1080",
-                ("1080p", "4:3"): "1440x1080",
-                ("1080p", "21:9"): "2560x1080",
-                ("720p", "16:9"): "1280x720",
-                ("720p", "9:16"): "720x1280",
-                ("720p", "1:1"): "720x720",
-                ("720p", "4:3"): "960x720",
-                ("720p", "21:9"): "1680x720",
-                ("480p", "16:9"): "854x480",
-                ("480p", "9:16"): "480x854",
-                ("480p", "1:1"): "480x480",
-                ("480p", "4:3"): "640x480",
-                ("480p", "21:9"): "1120x480",
-            }
+            # OpenAI only supports 4 specific sizes: 720x1280, 1280x720, 1024x1792, 1792x1024
+            # Map resolution + aspect_ratio to closest OpenAI supported size
+            if "openai.com" in base_url:
+                # Use OpenAI's exact supported sizes
+                size_mapping = {
+                    # 16:9 landscape
+                    ("1080p", "16:9"): "1280x720",
+                    ("720p", "16:9"): "1280x720",
+                    ("480p", "16:9"): "1280x720",
+                    # 9:16 portrait
+                    ("1080p", "9:16"): "720x1280",
+                    ("720p", "9:16"): "720x1280",
+                    ("480p", "9:16"): "720x1280",
+                    # Wide landscape (21:9, 4:3) → use 1792x1024
+                    ("1080p", "21:9"): "1792x1024",
+                    ("720p", "21:9"): "1792x1024",
+                    ("480p", "21:9"): "1792x1024",
+                    ("1080p", "4:3"): "1792x1024",
+                    ("720p", "4:3"): "1792x1024",
+                    ("480p", "4:3"): "1792x1024",
+                    # Square (1:1) → use closest landscape
+                    ("1080p", "1:1"): "1280x720",
+                    ("720p", "1:1"): "1280x720",
+                    ("480p", "1:1"): "1280x720",
+                }
+            else:
+                # Full size mapping for non-OpenAI APIs
+                size_mapping = {
+                    ("1080p", "16:9"): "1920x1080",
+                    ("1080p", "9:16"): "1080x1920",
+                    ("1080p", "1:1"): "1080x1080",
+                    ("1080p", "4:3"): "1440x1080",
+                    ("1080p", "21:9"): "2560x1080",
+                    ("720p", "16:9"): "1280x720",
+                    ("720p", "9:16"): "720x1280",
+                    ("720p", "1:1"): "720x720",
+                    ("720p", "4:3"): "960x720",
+                    ("720p", "21:9"): "1680x720",
+                    ("480p", "16:9"): "854x480",
+                    ("480p", "9:16"): "480x854",
+                    ("480p", "1:1"): "480x480",
+                    ("480p", "4:3"): "640x480",
+                    ("480p", "21:9"): "1120x480",
+                }
             
             # Build parameters in OpenAI format
             # OpenAI only accepts specific values for seconds: "4", "8", or "12"
@@ -110,8 +136,11 @@ class VideoGenerationNode:
                 if int(closest_seconds) != duration:
                     print(f"[INFO] OpenAI only supports 4, 8, or 12 second videos. Converting {duration}s → {closest_seconds}s")
                 
+                final_size = size_mapping.get((resolution, aspect_ratio), "1280x720")
+                print(f"[INFO] OpenAI video size: {resolution} {aspect_ratio} → {final_size}")
+                
                 params = {
-                    "size": size_mapping.get((resolution, aspect_ratio), "1920x1080"),
+                    "size": final_size,
                     "seconds": closest_seconds,  # OpenAI expects string: "4", "8", or "12"
                 }
             else:

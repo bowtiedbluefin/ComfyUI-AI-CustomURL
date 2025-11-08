@@ -210,7 +210,11 @@ class OpenAIAPIClient:
             prompt: Video description (required)
             **params: Optional parameters:
                 OpenAI format:
-                - size (str): Video resolution e.g., "1920x1080", "720x1280"
+                - size (str): Video resolution, must be one of:
+                  - "1280x720" (landscape)
+                  - "720x1280" (portrait)
+                  - "1792x1024" (wide landscape)
+                  - "1024x1792" (tall portrait)
                 - seconds (str): Duration as string, must be "4", "8", or "12"
                 - image (str): Base64 data URL for image-to-video
                 

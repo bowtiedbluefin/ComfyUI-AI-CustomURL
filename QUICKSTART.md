@@ -120,10 +120,14 @@ models:
 3. Execute → Get your generated video URL!
 
 **Note**: The node automatically converts parameters to OpenAI's format:
-- `resolution` + `aspect_ratio` → `size` (e.g., "1920x1080")
+- `resolution` + `aspect_ratio` → `size` (OpenAI only supports 4 sizes):
+  - `16:9` → `"1280x720"` (landscape)
+  - `9:16` → `"720x1280"` (portrait)
+  - `21:9` or `4:3` → `"1792x1024"` (wide landscape)
+  - `1:1` → `"1280x720"` (defaults to landscape)
 - `duration` → `seconds` as string ("4", "8", or "12" only)
-  - If you enter 5, it will round to the nearest valid value (4)
   - OpenAI only supports 4, 8, or 12 second videos
+  - Will round to nearest valid value
 - `fps` is filtered out (not supported by OpenAI)
 - For image-to-video, connect an image input → `image` parameter
 
