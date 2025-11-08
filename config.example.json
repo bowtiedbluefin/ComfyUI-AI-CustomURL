@@ -1,0 +1,54 @@
+{
+  "profiles": {
+    "openai": {
+      "base_url": "https://api.openai.com/v1",
+      "api_key": "sk-YOUR_OPENAI_API_KEY_HERE",
+      "enabled": true,
+      "description": "Official OpenAI API",
+      "default_models": {
+        "text": "gpt-4o",
+        "image": "dall-e-3",
+        "video": "sora-1.0",
+        "speech": "tts-1"
+      }
+    },
+    "venice": {
+      "base_url": "https://api.venice.ai/api/v1",
+      "api_key": "YOUR_VENICE_API_KEY_HERE",
+      "enabled": true,
+      "description": "Venice.ai - Privacy-focused AI",
+      "default_models": {
+        "text": "llama-3.3-70b",
+        "image": "flux-dev",
+        "speech": "tts-kokoro"
+      }
+    },
+    "openrouter": {
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key": "YOUR_OPENROUTER_API_KEY_HERE",
+      "enabled": false,
+      "description": "OpenRouter - Multi-provider gateway"
+    },
+    "local_ollama": {
+      "base_url": "http://localhost:11434/v1",
+      "api_key": "not-needed",
+      "enabled": false,
+      "description": "Local Ollama instance"
+    },
+    "together": {
+      "base_url": "https://api.together.xyz/v1",
+      "api_key": "YOUR_TOGETHER_API_KEY_HERE",
+      "enabled": false,
+      "description": "Together.ai"
+    }
+  },
+  "settings": {
+    "cache_models": true,
+    "cache_duration_minutes": 60,
+    "request_timeout_seconds": 120,
+    "max_retries": 3,
+    "retry_delay_seconds": 2,
+    "debug_mode": false
+  }
+}
+
