@@ -10,84 +10,57 @@ from datetime import datetime
 
 class ImageLoaderNode:
     """
-    Load image from URL or file upload
+    Load image from URL
+    
+    Note: For file uploads, use ComfyUI's built-in 'Load Image' node
     """
     
     @classmethod
     def INPUT_TYPES(cls):
-        import folder_paths
         return {
             "required": {
-                "mode": (["url", "file"], {
-                    "default": "url",
-                }),
                 "url": ("STRING", {
                     "default": "",
                     "multiline": False,
                 }),
-                "image_file": (sorted(folder_paths.get_filename_list("input")), {
-                    "image_upload": True
-                }),
             },
         }
     
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("image", "status")
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
     FUNCTION = "load_image"
     CATEGORY = "ai_customurl"
     
-    def load_image(self, mode, url, image_file):
-        """Load image from URL or uploaded file"""
+    def load_image(self, url):
+        """Load image from URL"""
         
         from ..utils.converters import url_to_tensor, create_blank_tensor
-        import folder_paths
-        from PIL import Image
-        import numpy as np
         
         try:
-            if mode == "file" and image_file:
-                # Load from ComfyUI input folder
-                image_path = folder_paths.get_annotated_filepath(image_file)
-                img = Image.open(image_path)
-                img = img.convert("RGB")
-                image_np = np.array(img).astype(np.float32) / 255.0
-                image_tensor = torch.from_numpy(image_np)[None,]
-                return (image_tensor, f"Loaded image from file: {image_file}")
-            elif mode == "url" and url:
-                loaded_image = url_to_tensor(url)
-                return (loaded_image, f"Loaded image from URL: {url}")
-            else:
-                error_msg = "No image source provided"
-                print(error_msg)
-                blank = create_blank_tensor()
-                return (blank, error_msg)
+            image = url_to_tensor(url)
+            return (image,)
             
         except Exception as e:
             error_msg = f"Failed to load image: {str(e)}"
             print(error_msg)
             blank = create_blank_tensor()
-            return (blank, error_msg)
+            return (blank,)
 
 
 class VideoLoaderNode:
     """
-    Load video from URL or file and convert to image frames
+    Load video from URL and convert to image frames
+    
+    Note: For file uploads, use ComfyUI's built-in 'Load Video' node
     """
     
     @classmethod
     def INPUT_TYPES(cls):
-        import folder_paths
         return {
             "required": {
-                "mode": (["url", "file"], {
-                    "default": "url",
-                }),
                 "url": ("STRING", {
                     "default": "",
                     "multiline": False,
-                }),
-                "video_file": (sorted(folder_paths.get_filename_list("input")), {
-                    "video_upload": True
                 }),
                 "start_frame": ("INT", {
                     "default": 0,
@@ -129,9 +102,7 @@ class VideoLoaderNode:
     
     def load_video(
         self,
-        mode,
         url,
-        video_file,
         start_frame,
         frame_count,
         skip_frames,
@@ -139,35 +110,24 @@ class VideoLoaderNode:
         target_width,
         target_height,
     ):
-        """Load video from URL or file"""
+        """Load video from URL"""
         
         import tempfile
         import os
         import requests
         import cv2
-        import folder_paths
         from ..utils.converters import create_blank_tensor
         
         try:
-            # Get video file path
-            if mode == "file" and video_file:
-                # Load from ComfyUI input folder
-                temp_file_path = folder_paths.get_annotated_filepath(video_file)
-            elif mode == "url" and url:
-                # Download video to temporary file
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_file:
-                    response = requests.get(url, stream=True, timeout=60)
-                    response.raise_for_status()
-                    
-                    for chunk in response.iter_content(chunk_size=8192):
-                        temp_file.write(chunk)
-                    
-                    temp_file_path = temp_file.name
-            else:
-                error_msg = "No video source provided"
-                print(error_msg)
-                blank = create_blank_tensor()
-                return (blank, error_msg)
+            # Download video to temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_file:
+                response = requests.get(url, stream=True, timeout=60)
+                response.raise_for_status()
+                
+                for chunk in response.iter_content(chunk_size=8192):
+                    temp_file.write(chunk)
+                
+                temp_file_path = temp_file.name
             
             # Load video using OpenCV
             cap = cv2.VideoCapture(temp_file_path)
@@ -234,9 +194,7 @@ class VideoLoaderNode:
                 frame_idx += 1
             
             cap.release()
-            # Only delete temp file if we downloaded it
-            if mode == "url":
-                os.unlink(temp_file_path)
+            os.unlink(temp_file_path)
             
             if frames:
                 # Stack frames
@@ -345,14 +303,50 @@ class SaveVideoNode:
             return ("", error_msg)
 
 
+class ShowTextNode:
+    """
+    Display text in ComfyUI interface
+    """
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "text": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                    "forceInput": True,
+                }),
+            },
+        }
+    
+    RETURN_TYPES = ()
+    FUNCTION = "show_text"
+    CATEGORY = "ai_customurl"
+    OUTPUT_NODE = True
+    
+    def show_text(self, text):
+        """Display text"""
+        return {"ui": {"text": [text]}}
+
+
 NODE_CLASS_MAPPINGS = {
+    # New node names
     "ImageLoader_AICustomURL": ImageLoaderNode,
     "VideoLoader_AICustomURL": VideoLoaderNode,
     "SaveVideo_AICustomURL": SaveVideoNode,
+    "ShowText_AICustomURL": ShowTextNode,
+    # Backwards compatibility - keep old names working
+    "ImageURLLoader_AICustomURL": ImageLoaderNode,
+    "VideoURLLoader_AICustomURL": VideoLoaderNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ImageLoader_AICustomURL": "Load Image (AI CustomURL)",
     "VideoLoader_AICustomURL": "Load Video (AI CustomURL)",
     "SaveVideo_AICustomURL": "Save Video from URL",
+    "ShowText_AICustomURL": "Show Text (AI CustomURL)",
+    # Backwards compatibility
+    "ImageURLLoader_AICustomURL": "Load Image from URL",
+    "VideoURLLoader_AICustomURL": "Load Video from URL",
 }
