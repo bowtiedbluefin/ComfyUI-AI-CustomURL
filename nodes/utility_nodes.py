@@ -343,7 +343,8 @@ class ShowTextNode:
     def show_text(self, text):
         """Display text in UI and pass it through"""
         print(f"[SHOW TEXT] {text}")
-        return {"ui": {"text": [text]}, "result": (text,)}
+        # Return in proper ComfyUI format - text should not be in a list
+        return {"ui": {"text": (text,)}, "result": (text,)}
 
 
 NODE_CLASS_MAPPINGS = {
