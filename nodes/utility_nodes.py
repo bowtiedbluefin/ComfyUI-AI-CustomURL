@@ -266,8 +266,10 @@ class SaveVideoNode:
         """Download and save video from URL"""
         
         try:
-            if not video_url or video_url.startswith("error:"):
-                return ("", f"Invalid video URL: {video_url}")
+            # Check if URL is valid before trying to download
+            if not video_url or not video_url.startswith(("http://", "https://")):
+                print(f"[WARNING] Save Video: Invalid or empty URL, skipping")
+                return ("", "No valid video URL to save")
             
             # Replace {timestamp} placeholder
             if "{timestamp}" in filename:
