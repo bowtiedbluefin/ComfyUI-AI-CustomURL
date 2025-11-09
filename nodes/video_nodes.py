@@ -526,44 +526,67 @@ class VideoPreviewNode:
     def preview_video(self, video_url, api_key=""):
         """Download and preview video"""
         
-        import tempfile
+        import os
+        import shutil
+        import hashlib
         import requests
+        from pathlib import Path
         
         try:
             if not video_url or video_url.startswith("error:"):
                 return {"ui": {"text": [f"Error: Invalid video URL: {video_url}"]}}
             
-            # Create temp file for video
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4", dir=tempfile.gettempdir()) as temp_file:
-                temp_path = temp_file.name
-                
-                print(f"[INFO] Downloading video for preview: {video_url}")
-                
-                # Setup headers for authenticated requests
-                headers = {}
-                if api_key and ("openai.com" in video_url or "api.openai" in video_url):
-                    headers["Authorization"] = f"Bearer {api_key}"
-                    print(f"[INFO] Using authenticated download for preview")
-                
-                # Download video
-                response = requests.get(video_url, headers=headers, stream=True, timeout=300)
-                response.raise_for_status()
-                
-                # Write to temp file
+            # Get ComfyUI output directory
+            # Try to find ComfyUI's output directory
+            try:
+                import folder_paths
+                output_dir = folder_paths.get_output_directory()
+            except:
+                # Fallback to current directory + output
+                output_dir = os.path.join(os.getcwd(), "output")
+            
+            # Create videos subdirectory
+            video_dir = os.path.join(output_dir, "videos")
+            os.makedirs(video_dir, exist_ok=True)
+            
+            # Generate filename from URL hash to avoid duplicates
+            url_hash = hashlib.md5(video_url.encode()).hexdigest()[:8]
+            filename = f"preview_{url_hash}.mp4"
+            video_path = os.path.join(video_dir, filename)
+            
+            print(f"[INFO] Downloading video for preview: {video_url}")
+            
+            # Setup headers for authenticated requests
+            headers = {}
+            if api_key and ("openai.com" in video_url or "api.openai" in video_url):
+                headers["Authorization"] = f"Bearer {api_key}"
+                print(f"[INFO] Using authenticated download for preview")
+            
+            # Download video
+            response = requests.get(video_url, headers=headers, stream=True, timeout=300)
+            response.raise_for_status()
+            
+            # Save to file
+            with open(video_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
-                    temp_file.write(chunk)
+                    f.write(chunk)
             
             # Get file size
-            import os
-            file_size_mb = os.path.getsize(temp_path) / (1024 * 1024)
+            file_size_mb = os.path.getsize(video_path) / (1024 * 1024)
             print(f"[SUCCESS] Video downloaded for preview: {file_size_mb:.2f} MB")
+            print(f"[INFO] Video saved to: {video_path}")
             
             # Return video for ComfyUI preview
-            # ComfyUI expects videos in a specific format
+            # ComfyUI format: list of dicts with filename and subfolder
             return {
                 "ui": {
-                    "videos": [(temp_path, )],
-                    "text": [f"Video preview ({file_size_mb:.2f} MB)"]
+                    "videos": [
+                        {
+                            "filename": filename,
+                            "subfolder": "videos",
+                            "type": "output"
+                        }
+                    ]
                 }
             }
             
