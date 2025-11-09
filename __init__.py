@@ -12,9 +12,6 @@ import os
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
 
-# Set the web directory for JavaScript extensions
-WEB_DIRECTORY = os.path.join(os.path.dirname(__file__), "web")
-
 try:
     # Import all node mappings
     from .nodes.text_nodes import NODE_CLASS_MAPPINGS as TEXT_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as TEXT_DISPLAY
@@ -61,7 +58,7 @@ except Exception as e:
     print(f"[AI CustomURL] ERROR loading utility_nodes: {e}")
     traceback.print_exc()
 
-__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS', 'WEB_DIRECTORY']
+__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
 
 print("=" * 60)
 print(f"AI CustomURL Extension Loaded: {len(NODE_CLASS_MAPPINGS)} total nodes")
