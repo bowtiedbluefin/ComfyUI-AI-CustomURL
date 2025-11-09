@@ -344,9 +344,12 @@ class ShowTextNode:
     
     def show_text(self, text):
         """Display text in UI and pass it through"""
-        print(f"[SHOW TEXT] {text}")
+        # Handle empty text gracefully
+        display_text = text if text and text.strip() else "(empty)"
+        print(f"[SHOW TEXT] {display_text}")
+
         # Return UI data for ComfyUI display and pass through result
-        return {"ui": {"text": text}, "result": (text,)}
+        return {"ui": {"text": display_text}, "result": (text,)}
 
 
 NODE_CLASS_MAPPINGS = {

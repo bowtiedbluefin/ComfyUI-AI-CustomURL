@@ -585,7 +585,7 @@ class VideoPreviewNode:
             # Check if URL is valid before trying to download
             if not video_url or not video_url.startswith(("http://", "https://")):
                 print(f"[WARNING] Preview Video: Invalid or empty URL, skipping")
-                return {}
+                return {"result": ("",)}
 
             # Use ComfyUI's output directory for videos (not temp)
             output_dir = folder_paths.get_output_directory()
