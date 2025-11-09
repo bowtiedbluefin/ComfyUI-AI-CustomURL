@@ -306,6 +306,8 @@ class SaveVideoNode:
 class ShowTextNode:
     """
     Display text in ComfyUI interface
+    
+    Connect any STRING output to this node to display it
     """
     
     @classmethod
@@ -320,14 +322,16 @@ class ShowTextNode:
             },
         }
     
-    RETURN_TYPES = ()
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text",)
     FUNCTION = "show_text"
     CATEGORY = "ai_customurl"
     OUTPUT_NODE = True
     
     def show_text(self, text):
-        """Display text"""
-        return {"ui": {"text": [text]}}
+        """Display text in UI and pass it through"""
+        print(f"[SHOW TEXT] {text}")
+        return {"ui": {"text": [text]}, "result": (text,)}
 
 
 NODE_CLASS_MAPPINGS = {
@@ -342,11 +346,11 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ImageLoader_AICustomURL": "Load Image (AI CustomURL)",
-    "VideoLoader_AICustomURL": "Load Video (AI CustomURL)",
+    "ImageLoader_AICustomURL": "Load Image from URL (AI CustomURL)",
+    "VideoLoader_AICustomURL": "Load Video from URL (AI CustomURL)",
     "SaveVideo_AICustomURL": "Save Video from URL",
     "ShowText_AICustomURL": "Show Text (AI CustomURL)",
     # Backwards compatibility
-    "ImageURLLoader_AICustomURL": "Load Image from URL",
-    "VideoURLLoader_AICustomURL": "Load Video from URL",
+    "ImageURLLoader_AICustomURL": "Load Image from URL (AI CustomURL)",
+    "VideoURLLoader_AICustomURL": "Load Video from URL (AI CustomURL)",
 }

@@ -72,10 +72,11 @@ class VideoGenerationNode:
             },
         }
     
-    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("video_url", "video_id", "api_key", "response_json")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("video_url", "video_id", "api_key", "status", "response_json")
     FUNCTION = "generate_video"
     CATEGORY = "ai_customurl"
+    OUTPUT_NODE = True
     
     def generate_video(
         self,
@@ -245,7 +246,7 @@ class VideoGenerationNode:
                             elif status == "failed":
                                 error_msg = poll_response.get("error", "Unknown error")
                                 print(f"[ERROR] Video generation failed: {error_msg}")
-                                return ("", video_id, json.dumps(poll_response, indent=2))
+                                return ("", video_id, api_key, "failed", json.dumps(poll_response, indent=2))
                         except Exception as poll_error:
                             print(f"[WARNING] Poll error: {poll_error}")
                             # Continue polling despite error
@@ -254,7 +255,7 @@ class VideoGenerationNode:
                     if status != "completed":
                         print(f"[WARNING] Max wait time ({max_wait_time}s) reached. Status: {status}")
                         print(f"[INFO] Use 'Retrieve Video Status' node with ID: {video_id}")
-                        return ("", video_id, response_json)
+                        return ("", video_id, api_key, f"timeout (status: {status})", response_json)
                 
                 # Extract URL if completed
                 if status == "completed":
@@ -287,13 +288,18 @@ class VideoGenerationNode:
             
             if not video_url and not video_id:
                 print(f"[WARNING] No video URL or ID found in response")
+                status = "error"
+            elif not video_url:
+                status = "processing"  
+            else:
+                status = "completed"
             
-            return (video_url, video_id, api_key, response_json)
+            return (video_url, video_id, api_key, status, response_json)
             
         except Exception as e:
             error_msg = f"Video generation failed: {str(e)}"
             print(error_msg)
-            return (error_msg, "", "", str(e))
+            return (error_msg, "", "", "error", str(e))
 
 
 class VideoAdvancedParamsNode:
@@ -567,13 +573,10 @@ class VideoPreviewNode:
             
             # Return simple text message - video preview in ComfyUI requires custom JS widget
             # For now, just show success message and file path
+            preview_text = f"✅ Video downloaded! ({file_size_mb:.2f} MB)\n📁 {video_path}\n💡 Tip: Use 'Save Video from URL' to save permanently"
             return {
                 "ui": {
-                    "text": [
-                        f"✅ Video preview ready! ({file_size_mb:.2f} MB)",
-                        f"📁 Temp location: {video_path}",
-                        f"💡 Use 'Save Video from URL' node to save permanently"
-                    ]
+                    "text": [preview_text]
                 }
             }
             
