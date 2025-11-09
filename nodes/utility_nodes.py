@@ -10,18 +10,23 @@ from datetime import datetime
 
 class ImageLoaderNode:
     """
-    Load image from URL
+    Load image from URL or local file
     
-    Note: For file uploads, use ComfyUI's built-in 'Load Image' node
+    Switch between 'url' and 'file' mode to choose your source
     """
     
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
+                "mode": (["url", "file"],),
                 "url": ("STRING", {
                     "default": "",
                     "multiline": False,
+                }),
+                "upload": ("STRING", {
+                    "default": "image",
+                    "image_upload": True,
                 }),
             },
         }
@@ -31,14 +36,33 @@ class ImageLoaderNode:
     FUNCTION = "load_image"
     CATEGORY = "ai_customurl"
     
-    def load_image(self, url):
-        """Load image from URL"""
+    def load_image(self, mode, url, upload):
+        """Load image from URL or file"""
         
         from ..utils.converters import url_to_tensor, create_blank_tensor
+        from PIL import Image
+        import numpy as np
+        import folder_paths
+        import os
         
         try:
-            image = url_to_tensor(url)
-            return (image,)
+            if mode == "file":
+                # Load from uploaded file
+                image_path = folder_paths.get_annotated_filepath(upload)
+                if not os.path.exists(image_path):
+                    # Try input folder
+                    image_path = os.path.join(folder_paths.get_input_directory(), upload)
+                
+                img = Image.open(image_path)
+                img = img.convert("RGB")
+                image_np = np.array(img).astype(np.float32) / 255.0
+                image_tensor = torch.from_numpy(image_np)[None,]
+                print(f"[INFO] Loaded image from file: {upload}")
+                return (image_tensor,)
+            else:  # url mode
+                image = url_to_tensor(url)
+                print(f"[INFO] Loaded image from URL: {url}")
+                return (image,)
             
         except Exception as e:
             error_msg = f"Failed to load image: {str(e)}"
@@ -49,18 +73,23 @@ class ImageLoaderNode:
 
 class VideoLoaderNode:
     """
-    Load video from URL and convert to image frames
+    Load video from URL or local file and convert to image frames
     
-    Note: For file uploads, use ComfyUI's built-in 'Load Video' node
+    Switch between 'url' and 'file' mode to choose your source
     """
     
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
+                "mode": (["url", "file"],),
                 "url": ("STRING", {
                     "default": "",
                     "multiline": False,
+                }),
+                "upload": ("STRING", {
+                    "default": "video.mp4",
+                    "video_upload": True,
                 }),
                 "start_frame": ("INT", {
                     "default": 0,
@@ -102,7 +131,9 @@ class VideoLoaderNode:
     
     def load_video(
         self,
+        mode,
         url,
+        upload,
         start_frame,
         frame_count,
         skip_frames,
@@ -110,24 +141,37 @@ class VideoLoaderNode:
         target_width,
         target_height,
     ):
-        """Load video from URL"""
+        """Load video from URL or file"""
         
         import tempfile
         import os
         import requests
         import cv2
+        import folder_paths
         from ..utils.converters import create_blank_tensor
         
         try:
-            # Download video to temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_file:
-                response = requests.get(url, stream=True, timeout=60)
-                response.raise_for_status()
-                
-                for chunk in response.iter_content(chunk_size=8192):
-                    temp_file.write(chunk)
-                
-                temp_file_path = temp_file.name
+            if mode == "file":
+                # Load from uploaded file
+                video_path = folder_paths.get_annotated_filepath(upload)
+                if not os.path.exists(video_path):
+                    # Try input folder
+                    video_path = os.path.join(folder_paths.get_input_directory(), upload)
+                temp_file_path = video_path
+                cleanup_temp = False
+                print(f"[INFO] Loading video from file: {upload}")
+            else:  # url mode
+                # Download video to temporary file
+                print(f"[INFO] Downloading video from URL: {url}")
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_file:
+                    response = requests.get(url, stream=True, timeout=60)
+                    response.raise_for_status()
+                    
+                    for chunk in response.iter_content(chunk_size=8192):
+                        temp_file.write(chunk)
+                    
+                    temp_file_path = temp_file.name
+                cleanup_temp = True
             
             # Load video using OpenCV
             cap = cv2.VideoCapture(temp_file_path)
@@ -194,7 +238,9 @@ class VideoLoaderNode:
                 frame_idx += 1
             
             cap.release()
-            os.unlink(temp_file_path)
+            # Only delete if it was a temp file (URL mode)
+            if cleanup_temp:
+                os.unlink(temp_file_path)
             
             if frames:
                 # Stack frames
@@ -346,11 +392,11 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ImageLoader_AICustomURL": "Load Image from URL (AI CustomURL)",
-    "VideoLoader_AICustomURL": "Load Video from URL (AI CustomURL)",
+    "ImageLoader_AICustomURL": "Load Image (AI CustomURL)",
+    "VideoLoader_AICustomURL": "Load Video (AI CustomURL)",
     "SaveVideo_AICustomURL": "Save Video from URL",
     "ShowText_AICustomURL": "Show Text (AI CustomURL)",
     # Backwards compatibility
-    "ImageURLLoader_AICustomURL": "Load Image from URL (AI CustomURL)",
-    "VideoURLLoader_AICustomURL": "Load Video from URL (AI CustomURL)",
+    "ImageURLLoader_AICustomURL": "Load Image (AI CustomURL)",
+    "VideoURLLoader_AICustomURL": "Load Video (AI CustomURL)",
 }
