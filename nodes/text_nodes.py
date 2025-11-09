@@ -31,10 +31,6 @@ class TextGenerationNode:
                     "default": "",
                     "multiline": True,
                 }),
-                "system_prompt": ("STRING", {
-                    "default": "You are a helpful assistant.",
-                    "multiline": True,
-                }),
                 "temperature": ("FLOAT", {
                     "default": 1.0,
                     "min": 0.0,
@@ -49,6 +45,10 @@ class TextGenerationNode:
                 }),
             },
             "optional": {
+                "system_prompt": ("STRING", {
+                    "default": "You are a helpful assistant.",
+                    "multiline": True,
+                }),
                 "image": ("IMAGE",),
                 "advanced_params_json": ("STRING", {
                     "default": "",
@@ -68,9 +68,9 @@ class TextGenerationNode:
         api_key,
         model,
         prompt,
-        system_prompt,
         temperature,
         max_tokens,
+        system_prompt="You are a helpful assistant.",
         image=None,
         advanced_params_json="",
     ):

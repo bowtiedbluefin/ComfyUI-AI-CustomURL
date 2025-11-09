@@ -527,32 +527,21 @@ class VideoPreviewNode:
         """Download and preview video"""
         
         import os
-        import shutil
         import hashlib
         import requests
-        from pathlib import Path
+        import tempfile
         
         try:
             if not video_url or video_url.startswith("error:"):
                 return {"ui": {"text": [f"Error: Invalid video URL: {video_url}"]}}
             
-            # Get ComfyUI output directory
-            # Try to find ComfyUI's output directory
-            try:
-                import folder_paths
-                output_dir = folder_paths.get_output_directory()
-            except:
-                # Fallback to current directory + output
-                output_dir = os.path.join(os.getcwd(), "output")
-            
-            # Create videos subdirectory
-            video_dir = os.path.join(output_dir, "videos")
-            os.makedirs(video_dir, exist_ok=True)
+            # Use temp directory instead of output to avoid duplicate files
+            temp_dir = tempfile.gettempdir()
             
             # Generate filename from URL hash to avoid duplicates
             url_hash = hashlib.md5(video_url.encode()).hexdigest()[:8]
-            filename = f"preview_{url_hash}.mp4"
-            video_path = os.path.join(video_dir, filename)
+            filename = f"comfy_preview_{url_hash}.mp4"
+            video_path = os.path.join(temp_dir, filename)
             
             print(f"[INFO] Downloading video for preview: {video_url}")
             
@@ -574,18 +563,16 @@ class VideoPreviewNode:
             # Get file size
             file_size_mb = os.path.getsize(video_path) / (1024 * 1024)
             print(f"[SUCCESS] Video downloaded for preview: {file_size_mb:.2f} MB")
-            print(f"[INFO] Video saved to: {video_path}")
+            print(f"[INFO] Video preview at: {video_path}")
             
-            # Return video for ComfyUI preview
-            # ComfyUI format: list of dicts with filename and subfolder
+            # Return simple text message - video preview in ComfyUI requires custom JS widget
+            # For now, just show success message and file path
             return {
                 "ui": {
-                    "videos": [
-                        {
-                            "filename": filename,
-                            "subfolder": "videos",
-                            "type": "output"
-                        }
+                    "text": [
+                        f"✅ Video preview ready! ({file_size_mb:.2f} MB)",
+                        f"📁 Temp location: {video_path}",
+                        f"💡 Use 'Save Video from URL' node to save permanently"
                     ]
                 }
             }
