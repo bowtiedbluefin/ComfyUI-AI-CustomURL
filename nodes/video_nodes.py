@@ -72,8 +72,8 @@ class VideoGenerationNode:
             },
         }
     
-    RETURN_TYPES = ("STRING", "STRING", "STRING")
-    RETURN_NAMES = ("video_url", "video_id", "response_json")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("video_url", "video_id", "api_key", "response_json")
     FUNCTION = "generate_video"
     CATEGORY = "ai_customurl"
     
@@ -258,14 +258,21 @@ class VideoGenerationNode:
                 
                 # Extract URL if completed
                 if status == "completed":
-                    if "url" in response:
+                    # OpenAI doesn't return a direct URL in the status response
+                    # Need to construct the download URL from the video ID
+                    if "openai.com" in base_url:
+                        # OpenAI format: GET /v1/videos/{id}/content
+                        video_url = f"{base_url}/videos/{video_id}/content"
+                        print(f"[SUCCESS] Video download URL: {video_url}")
+                    # Check for direct URL fields (other APIs)
+                    elif "url" in response:
                         video_url = response.get("url", "")
+                        print(f"[SUCCESS] Video URL: {video_url}")
                     elif "output_url" in response:
                         video_url = response.get("output_url", "")
+                        print(f"[SUCCESS] Video URL: {video_url}")
                     elif "download_url" in response:
                         video_url = response.get("download_url", "")
-                    
-                    if video_url:
                         print(f"[SUCCESS] Video URL: {video_url}")
                     else:
                         print(f"[WARNING] Video completed but no URL found in response")
@@ -281,12 +288,12 @@ class VideoGenerationNode:
             if not video_url and not video_id:
                 print(f"[WARNING] No video URL or ID found in response")
             
-            return (video_url, video_id, response_json)
+            return (video_url, video_id, api_key, response_json)
             
         except Exception as e:
             error_msg = f"Video generation failed: {str(e)}"
             print(error_msg)
-            return (error_msg, "", str(e))
+            return (error_msg, "", "", str(e))
 
 
 class VideoAdvancedParamsNode:
@@ -487,14 +494,95 @@ class VideoRetrieveNode:
             return ("", "error", error_msg)
 
 
+class VideoPreviewNode:
+    """
+    Preview video in ComfyUI interface
+    
+    Downloads video and displays it in the UI
+    """
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "video_url": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+            },
+            "optional": {
+                "api_key": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+            },
+        }
+    
+    RETURN_TYPES = ()
+    FUNCTION = "preview_video"
+    CATEGORY = "ai_customurl"
+    OUTPUT_NODE = True
+    
+    def preview_video(self, video_url, api_key=""):
+        """Download and preview video"""
+        
+        import tempfile
+        import requests
+        
+        try:
+            if not video_url or video_url.startswith("error:"):
+                return {"ui": {"text": [f"Error: Invalid video URL: {video_url}"]}}
+            
+            # Create temp file for video
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4", dir=tempfile.gettempdir()) as temp_file:
+                temp_path = temp_file.name
+                
+                print(f"[INFO] Downloading video for preview: {video_url}")
+                
+                # Setup headers for authenticated requests
+                headers = {}
+                if api_key and ("openai.com" in video_url or "api.openai" in video_url):
+                    headers["Authorization"] = f"Bearer {api_key}"
+                    print(f"[INFO] Using authenticated download for preview")
+                
+                # Download video
+                response = requests.get(video_url, headers=headers, stream=True, timeout=300)
+                response.raise_for_status()
+                
+                # Write to temp file
+                for chunk in response.iter_content(chunk_size=8192):
+                    temp_file.write(chunk)
+            
+            # Get file size
+            import os
+            file_size_mb = os.path.getsize(temp_path) / (1024 * 1024)
+            print(f"[SUCCESS] Video downloaded for preview: {file_size_mb:.2f} MB")
+            
+            # Return video for ComfyUI preview
+            # ComfyUI expects videos in a specific format
+            return {
+                "ui": {
+                    "videos": [(temp_path, )],
+                    "text": [f"Video preview ({file_size_mb:.2f} MB)"]
+                }
+            }
+            
+        except Exception as e:
+            error_msg = f"Failed to preview video: {str(e)}"
+            print(error_msg)
+            return {"ui": {"text": [error_msg]}}
+
+
 NODE_CLASS_MAPPINGS = {
     "VideoGeneration_AICustomURL": VideoGenerationNode,
     "VideoAdvancedParams_AICustomURL": VideoAdvancedParamsNode,
     "VideoRetrieve_AICustomURL": VideoRetrieveNode,
+    "VideoPreview_AICustomURL": VideoPreviewNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "VideoGeneration_AICustomURL": "Generate Video (AI CustomURL)",
     "VideoAdvancedParams_AICustomURL": "Video Advanced Parameters",
     "VideoRetrieve_AICustomURL": "Retrieve Video Status (AI CustomURL)",
+    "VideoPreview_AICustomURL": "Preview Video (AI CustomURL)",
 }

@@ -133,6 +133,7 @@ models:
 **Outputs:**
 - `video_url` → Direct link to download video (when completed)
 - `video_id` → OpenAI's video generation ID
+- `api_key` → Passes your API key to download/preview nodes
 - `response_json` → Full API response for debugging
 
 **Note**: The node automatically converts parameters to OpenAI's format:
@@ -176,29 +177,46 @@ If you set `auto_poll: false`, use the "Retrieve Video Status" node:
 3. Run it to check status
 4. When status = "completed", use the `video_url` output
 
-### 💾 Saving Video Locally
+### 🎬 Preview & Save Video
 
-**Simple Workflow (Direct Connection):**
+**Complete Workflow:**
 
 ```
-[Generate Video] → video_url → [Save Video from URL]
-                                       ↓
-                                 Saved to disk!
+                              ┌─→ video_url ──→ [Preview Video]
+                              │     api_key         (see in UI!)
+[Generate Video] ─────────────┤
+(auto-polls)                  │
+                              └─→ video_url ──→ [Save Video from URL]
+                                    api_key         (saved to disk!)
 ```
 
-1. Add "Generate Video (AI CustomURL)" node (with auto_poll enabled)
-2. Add "Save Video from URL" node
-3. Connect `video_url` output → `video_url` input
-4. Configure save settings on Save node:
-   ```
-   filename: my_video_{timestamp}
-   output_folder: output/videos
-   ```
-5. Run the workflow → Video generates, polls until complete, then downloads automatically!
+**Setup:**
 
-The `{timestamp}` placeholder automatically adds a unique timestamp to each file.
+1. **Add "Generate Video (AI CustomURL)" node**
+   - Configure your prompt, model, etc.
+   - `auto_poll: true` (default)
 
-**That's it!** No manual copying, no waiting. The workflow handles everything.
+2. **Add "Preview Video (AI CustomURL)" node**
+   - Connect `video_url` → `video_url`
+   - Connect `api_key` → `api_key`
+   - Video will show in ComfyUI UI!
+
+3. **Add "Save Video from URL" node**
+   - Connect `video_url` → `video_url`
+   - Connect `api_key` → `api_key` (optional field)
+   - Set `filename: my_video_{timestamp}`
+   - Set `output_folder: output/videos`
+
+4. **Run the workflow!**
+   - Video generates automatically
+   - Preview appears in UI
+   - Video saves to disk
+   - All automatic! 🎉
+
+**Notes:**
+- The `api_key` connection enables authenticated downloads for OpenAI
+- The `{timestamp}` placeholder adds unique timestamps to filenames
+- `output/videos` folder will be created automatically if it doesn't exist
 
 ## 🎯 Example: Using Advanced Parameters
 

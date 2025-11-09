@@ -211,6 +211,8 @@ class VideoURLLoaderNode:
 class SaveVideoNode:
     """
     Download and save video from URL to local filesystem
+    
+    Supports both public URLs and authenticated endpoints (like OpenAI)
     """
     
     @classmethod
@@ -230,6 +232,12 @@ class SaveVideoNode:
                     "multiline": False,
                 }),
             },
+            "optional": {
+                "api_key": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                }),
+            },
         }
     
     RETURN_TYPES = ("STRING", "STRING")
@@ -238,7 +246,7 @@ class SaveVideoNode:
     CATEGORY = "ai_customurl"
     OUTPUT_NODE = True
     
-    def save_video(self, video_url, filename, output_folder):
+    def save_video(self, video_url, filename, output_folder, api_key=""):
         """Download and save video from URL"""
         
         try:
@@ -262,7 +270,14 @@ class SaveVideoNode:
             
             # Download video
             print(f"Downloading video from: {video_url}")
-            response = requests.get(video_url, stream=True, timeout=300)
+            
+            # Setup headers for authenticated requests (e.g., OpenAI)
+            headers = {}
+            if api_key and ("openai.com" in video_url or "api.openai" in video_url):
+                headers["Authorization"] = f"Bearer {api_key}"
+                print(f"[INFO] Using authenticated download")
+            
+            response = requests.get(video_url, headers=headers, stream=True, timeout=300)
             response.raise_for_status()
             
             # Save to file
