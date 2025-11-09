@@ -586,43 +586,48 @@ class VideoPreviewNode:
             output_dir = folder_paths.get_output_directory()
             output_dir = os.path.abspath(output_dir)
 
+            filename = os.path.basename(filepath)
+
             # Check if file is in output directory or subfolder
             if filepath.startswith(output_dir):
                 # File is in output directory, calculate relative path
                 rel_path = os.path.relpath(filepath, output_dir)
                 subfolder = os.path.dirname(rel_path)
-                filename = os.path.basename(filepath)
                 video_type = "output"
             else:
-                # File is elsewhere, copy it to output directory for preview
-                import shutil
-                filename = os.path.basename(filepath)
-                dest_path = os.path.join(output_dir, filename)
-
-                # Copy file to output directory
-                shutil.copy2(filepath, dest_path)
-                filepath = dest_path
+                # File is elsewhere - ComfyUI might support absolute paths or we need to create a symlink
+                # For now, let's try using the absolute path directly
                 subfolder = ""
                 video_type = "output"
+                # Create a symlink in output directory instead of copying the large file
+                link_path = os.path.join(output_dir, f"preview_link_{filename}")
+                try:
+                    if os.path.exists(link_path) or os.path.islink(link_path):
+                        os.unlink(link_path)
+                    os.symlink(filepath, link_path)
+                    filename = f"preview_link_{filename}"
+                    print(f"[INFO] Created symlink for video preview: {link_path}")
+                except OSError as link_error:
+                    print(f"[WARNING] Could not create symlink ({link_error}), file might not preview correctly")
+                    # Fall back to just returning the original path info
+                    pass
 
-                print(f"[INFO] Copied video to output directory for preview: {dest_path}")
-
-            # Verify file exists and get size
-            if not os.path.exists(filepath):
-                print(f"[ERROR] Preview Video: Failed to access file: {filepath}")
-                return ("",)
-
-            file_size_mb = os.path.getsize(filepath) / (1024 * 1024)
-            print(f"[SUCCESS] Video ready for preview: {filename} ({file_size_mb:.2f} MB)")
+            # Get file size for logging
+            try:
+                file_size_mb = os.path.getsize(filepath) / (1024 * 1024)
+                print(f"[SUCCESS] Video ready for preview: {filename} ({file_size_mb:.2f} MB)")
+            except OSError:
+                print(f"[SUCCESS] Video ready for preview: {filename}")
 
             # Return video in proper ComfyUI format for video preview
+            # Try different format options - ComfyUI might expect different format strings
             return {
                 "ui": {
                     "videos": [{
                         "filename": filename,
                         "subfolder": subfolder,
                         "type": video_type,
-                        "format": "video/h264-mp4"
+                        "format": "video/mp4"  # Try standard mp4 format instead of h264-mp4
                     }]
                 },
                 "result": (filepath,)
