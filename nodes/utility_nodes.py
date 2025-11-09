@@ -332,19 +332,44 @@ class ShowTextNode:
                     "forceInput": True,
                 }),
             },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+                "extra_pnginfo": "EXTRA_PNGINFO",
+            },
         }
     
+    INPUT_IS_LIST = True
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("text",)
     FUNCTION = "show_text"
     CATEGORY = "ai_customurl"
     OUTPUT_NODE = True
+    OUTPUT_IS_LIST = (True,)
     
-    def show_text(self, text):
+    def show_text(self, text, unique_id=None, extra_pnginfo=None):
         """Display text in UI and pass it through"""
         print(f"[SHOW TEXT] {text}")
-        # Return in proper ComfyUI format - text should not be in a list
-        return {"ui": {"text": (text,)}, "result": (text,)}
+        
+        # Save text to workflow for persistence (like fairy-root does)
+        if unique_id is not None and extra_pnginfo is not None:
+            if not isinstance(extra_pnginfo, list):
+                print("Error: extra_pnginfo is not a list")
+            elif (
+                not isinstance(extra_pnginfo[0], dict)
+                or "workflow" not in extra_pnginfo[0]
+            ):
+                print("Error: extra_pnginfo[0] is not a dict or missing 'workflow' key")
+            else:
+                workflow = extra_pnginfo[0]["workflow"]
+                node = next(
+                    (x for x in workflow["nodes"] if str(x["id"]) == str(unique_id[0])),
+                    None,
+                )
+                if node:
+                    node["widgets_values"] = [text]
+        
+        # Return in proper ComfyUI format - text is passed directly for UI
+        return {"ui": {"text": text}, "result": (text,)}
 
 
 NODE_CLASS_MAPPINGS = {

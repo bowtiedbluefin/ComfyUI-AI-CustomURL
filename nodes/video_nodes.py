@@ -257,7 +257,7 @@ class VideoGenerationNode:
                                 print(f"[ERROR] Video generation failed: {error_msg}")
                                 status_message = "\n".join(status_log)
                                 return {
-                                    "ui": {"text": (status_message,)},
+                                    "ui": {"text": status_message},
                                     "result": ("", video_id, api_key, "failed", json.dumps(poll_response, indent=2))
                                 }
                         except Exception as poll_error:
@@ -273,7 +273,7 @@ class VideoGenerationNode:
                         print(f"[INFO] Use 'Retrieve Video Status' node with ID: {video_id}")
                         status_message = "\n".join(status_log)
                         return {
-                            "ui": {"text": (status_message,)},
+                            "ui": {"text": status_message},
                             "result": ("", video_id, api_key, f"timeout (status: {status})", response_json)
                         }
                 
@@ -321,7 +321,7 @@ class VideoGenerationNode:
             # Return with UI text for status display
             status_message = "\n".join(status_log) if status_log else f"Status: {status}"
             return {
-                "ui": {"text": (status_message,)},
+                "ui": {"text": status_message},
                 "result": (video_url, video_id, api_key, status, response_json)
             }
             
@@ -329,7 +329,7 @@ class VideoGenerationNode:
             error_msg = f"❌ Video generation failed: {str(e)}"
             print(error_msg)
             return {
-                "ui": {"text": (error_msg,)},
+                "ui": {"text": error_msg},
                 "result": (error_msg, "", "", "error", str(e))
             }
 
@@ -496,7 +496,7 @@ class VideoRetrieveNode:
                 else:
                     error_msg = f"❌ Invalid video ID: {video_id}"
                     return {
-                        "ui": {"text": (error_msg,)},
+                        "ui": {"text": error_msg},
                         "result": ("", "error", f"Invalid video ID: {video_id}")
                     }
             
@@ -547,7 +547,7 @@ class VideoRetrieveNode:
                 print(f"[INFO] Video status: {status}")
             
             return {
-                "ui": {"text": (status_message,)},
+                "ui": {"text": status_message},
                 "result": (video_url, status, response_json)
             }
             
@@ -555,7 +555,7 @@ class VideoRetrieveNode:
             error_msg = f"❌ Failed to retrieve video: {str(e)}"
             print(error_msg)
             return {
-                "ui": {"text": (error_msg,)},
+                "ui": {"text": error_msg},
                 "result": ("", "error", str(e))
             }
 

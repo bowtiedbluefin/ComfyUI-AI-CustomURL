@@ -6,10 +6,14 @@ Users manually enter API URLs and model names.
 """
 
 import traceback
+import os
 
 # Initialize empty mappings
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
+
+# Set the web directory for JavaScript extensions
+WEB_DIRECTORY = os.path.join(os.path.dirname(__file__), "web")
 
 try:
     # Import all node mappings
@@ -57,7 +61,7 @@ except Exception as e:
     print(f"[AI CustomURL] ERROR loading utility_nodes: {e}")
     traceback.print_exc()
 
-__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
+__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS', 'WEB_DIRECTORY']
 
 print("=" * 60)
 print(f"AI CustomURL Extension Loaded: {len(NODE_CLASS_MAPPINGS)} total nodes")
