@@ -4,7 +4,7 @@ from .text_nodes import TextGenerationNode, TextAdvancedParamsNode
 from .image_nodes import ImageGenerationNode, ImageAdvancedParamsNode
 from .video_nodes import VideoGenerationNode, VideoAdvancedParamsNode
 from .speech_nodes import SpeechGenerationNode, SpeechAdvancedParamsNode
-from .utility_nodes import ImageURLLoaderNode, VideoURLLoaderNode
+from .utility_nodes import ImageLoaderNode, VideoLoaderNode
 
 __all__ = [
     "TextGenerationNode",
@@ -15,7 +15,7 @@ __all__ = [
     "VideoAdvancedParamsNode",
     "SpeechGenerationNode",
     "SpeechAdvancedParamsNode",
-    "ImageURLLoaderNode",
-    "VideoURLLoaderNode",
+    "ImageLoaderNode",
+    "VideoLoaderNode",
 ]
 

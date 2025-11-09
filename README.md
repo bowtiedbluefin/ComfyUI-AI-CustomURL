@@ -32,7 +32,7 @@ A comprehensive ComfyUI extension that enables **text, image, video, and speech 
 
 ```bash
 cd /path/to/ComfyUI/custom_nodes
-git clone https://github.com/your-username/ComfyUI-AI-CustomURL.git
+git clone https://github.com/bowtiedbluefin/ComfyUI-AI-CustomURL.git
 cd ComfyUI-AI-CustomURL
 pip install -r requirements.txt
 ```
@@ -41,7 +41,7 @@ pip install -r requirements.txt
 
 ```bash
 cd /path/to/ComfyUI_windows_portable/ComfyUI/custom_nodes
-git clone https://github.com/your-username/ComfyUI-AI-CustomURL.git
+git clone https://github.com/bowtiedbluefin/ComfyUI-AI-CustomURL.git
 cd ComfyUI-AI-CustomURL
 ../../python_embeded/python.exe -m pip install -r requirements.txt
 ```
@@ -306,8 +306,8 @@ MIT License - See LICENSE file for details
 
 ## 📞 Support
 
-- Issues: [GitHub Issues](https://github.com/your-username/ComfyUI-AI-CustomURL/issues)
-- Discussions: [GitHub Discussions](https://github.com/your-username/ComfyUI-AI-CustomURL/discussions)
+- Issues: [GitHub Issues](https://github.com/bowtiedbluefin/ComfyUI-AI-CustomURL/issues)
+- Discussions: [GitHub Discussions](https://github.com/bowtiedbluefin/ComfyUI-AI-CustomURL/discussions)
 
 ---
 
