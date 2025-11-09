@@ -546,89 +546,86 @@ class VideoRetrieveNode:
 class VideoPreviewNode:
     """
     Preview video in ComfyUI interface
-    
-    Downloads video and displays it in the UI
+
+    Takes a filepath and displays the video in the UI
     """
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "video_url": ("STRING", {
-                    "default": "",
-                    "multiline": False,
-                }),
-            },
-            "optional": {
-                "api_key": ("STRING", {
+                "filepath": ("STRING", {
                     "default": "",
                     "multiline": False,
                 }),
             },
         }
-    
+
     RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("video_url",)
+    RETURN_NAMES = ("filepath",)
     FUNCTION = "preview_video"
     CATEGORY = "ai_customurl"
     OUTPUT_NODE = True
-    
-    def preview_video(self, video_url, api_key=""):
-        """Download and preview video"""
+
+    def preview_video(self, filepath):
+        """Preview video from filepath"""
 
         import os
-        import hashlib
-        import requests
         import folder_paths
 
         try:
-            # Check if URL is valid before trying to download
-            if not video_url or not video_url.startswith(("http://", "https://")):
-                print(f"[WARNING] Preview Video: Invalid or empty URL, skipping")
+            # Check if filepath is valid
+            if not filepath or not os.path.exists(filepath):
+                print(f"[WARNING] Preview Video: File does not exist: {filepath}")
                 return ("",)
 
-            # Use ComfyUI's output directory for videos (not temp)
+            # Get absolute path
+            filepath = os.path.abspath(filepath)
+
+            # Get ComfyUI's output directory
             output_dir = folder_paths.get_output_directory()
+            output_dir = os.path.abspath(output_dir)
 
-            # Generate filename from URL hash to avoid duplicates
-            url_hash = hashlib.md5(video_url.encode()).hexdigest()[:8]
-            filename = f"preview_{url_hash}.mp4"
-            video_path = os.path.join(output_dir, filename)
+            # Check if file is in output directory or subfolder
+            if filepath.startswith(output_dir):
+                # File is in output directory, calculate relative path
+                rel_path = os.path.relpath(filepath, output_dir)
+                subfolder = os.path.dirname(rel_path)
+                filename = os.path.basename(filepath)
+                video_type = "output"
+            else:
+                # File is elsewhere, copy it to output directory for preview
+                import shutil
+                filename = os.path.basename(filepath)
+                dest_path = os.path.join(output_dir, filename)
 
-            print(f"[INFO] Downloading video for preview: {video_url}")
+                # Copy file to output directory
+                shutil.copy2(filepath, dest_path)
+                filepath = dest_path
+                subfolder = ""
+                video_type = "output"
 
-            # Setup headers for authenticated requests
-            headers = {}
-            if api_key and ("openai.com" in video_url or "api.openai" in video_url):
-                headers["Authorization"] = f"Bearer {api_key}"
-                print(f"[INFO] Using authenticated download for preview")
+                print(f"[INFO] Copied video to output directory for preview: {dest_path}")
 
-            # Download video
-            response = requests.get(video_url, headers=headers, stream=True, timeout=300)
-            response.raise_for_status()
+            # Verify file exists and get size
+            if not os.path.exists(filepath):
+                print(f"[ERROR] Preview Video: Failed to access file: {filepath}")
+                return ("",)
 
-            # Save to file
-            with open(video_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-
-            # Get file size
-            file_size_mb = os.path.getsize(video_path) / (1024 * 1024)
-            print(f"[SUCCESS] Video downloaded for preview: {file_size_mb:.2f} MB")
-            print(f"[INFO] Video saved at: {video_path}")
+            file_size_mb = os.path.getsize(filepath) / (1024 * 1024)
+            print(f"[SUCCESS] Video ready for preview: {filename} ({file_size_mb:.2f} MB)")
 
             # Return video in proper ComfyUI format for video preview
-            # Use output directory format that ComfyUI recognizes
             return {
                 "ui": {
                     "videos": [{
                         "filename": filename,
-                        "subfolder": "",
-                        "type": "output",
+                        "subfolder": subfolder,
+                        "type": video_type,
                         "format": "video/h264-mp4"
                     }]
                 },
-                "result": (video_url,)
+                "result": (filepath,)
             }
 
         except Exception as e:
