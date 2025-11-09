@@ -318,8 +318,9 @@ class VideoGenerationNode:
             
         except Exception as e:
             error_msg = f"Video generation failed: {str(e)}"
-            print(error_msg)
-            return (error_msg, "", "", "error", str(e))
+            print(f"[ERROR] {error_msg}")
+            # Return empty URL so downstream nodes don't try to download error messages
+            return ("", "", "", "error", str(e))
 
 
 class VideoAdvancedParamsNode:
@@ -580,8 +581,10 @@ class VideoPreviewNode:
         import folder_paths
         
         try:
-            if not video_url or video_url.startswith("error:"):
-                return {"ui": {"text": (f"Error: Invalid video URL: {video_url}",)}}
+            # Check if URL is valid before trying to download
+            if not video_url or not video_url.startswith(("http://", "https://")):
+                print(f"[WARNING] Preview Video: Invalid or empty URL, skipping")
+                return {}
             
             # Use ComfyUI's temp directory for previews
             output_dir = folder_paths.get_temp_directory()
@@ -622,15 +625,14 @@ class VideoPreviewNode:
                         "subfolder": "",
                         "type": "temp",
                         "format": "video/h264-mp4"
-                    }],
-                    "text": (f"✅ Video ready ({file_size_mb:.2f} MB)",)
+                    }]
                 }
             }
             
         except Exception as e:
             error_msg = f"Failed to preview video: {str(e)}"
-            print(error_msg)
-            return {"ui": {"text": (error_msg,)}}
+            print(f"[ERROR] {error_msg}")
+            return {}
 
 
 NODE_CLASS_MAPPINGS = {
