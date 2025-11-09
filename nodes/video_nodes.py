@@ -585,7 +585,7 @@ class VideoPreviewNode:
             # Check if URL is valid before trying to download
             if not video_url or not video_url.startswith(("http://", "https://")):
                 print(f"[WARNING] Preview Video: Invalid or empty URL, skipping")
-                return {"result": ("",)}
+                return ("",)
 
             # Use ComfyUI's output directory for videos (not temp)
             output_dir = folder_paths.get_output_directory()
@@ -634,7 +634,7 @@ class VideoPreviewNode:
         except Exception as e:
             error_msg = f"Failed to preview video: {str(e)}"
             print(f"[ERROR] {error_msg}")
-            return {"result": ("",)}
+            return ("",)
 
 
 NODE_CLASS_MAPPINGS = {

@@ -340,7 +340,7 @@ class ShowTextNode:
     RETURN_NAMES = ("text",)
     FUNCTION = "show_text"
     CATEGORY = "ai_customurl"
-    OUTPUT_NODE = True
+    # Not OUTPUT_NODE - display handled via UI return
     
     def show_text(self, text):
         """Display text in UI and pass it through"""
