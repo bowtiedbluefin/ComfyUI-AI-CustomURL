@@ -117,15 +117,15 @@ models:
    duration: 4
    fps: 24
    auto_poll: true
-   poll_interval: 10
-   max_wait_time: 600
+   poll_interval: 5
+   max_wait_time: 1200
    ```
 3. Execute → The node will automatically wait until video is ready!
 
 **Auto-Polling Feature** (enabled by default):
 - `auto_poll: true` → Node automatically checks video status every X seconds
-- `poll_interval: 10` → Check every 10 seconds
-- `max_wait_time: 600` → Give up after 10 minutes
+- `poll_interval: 5` → Check every 5 seconds (default)
+- `max_wait_time: 1200` → Give up after 20 minutes (default)
 - You'll see status updates in the console
 - Once completed, `video_url` output contains the download link
 - `video_id` output contains the generation ID (for manual retrieval if needed)
@@ -151,7 +151,7 @@ models:
 
 **With Auto-Polling (Default - Recommended):**
 1. Run "Generate Video" node with `auto_poll: true`
-2. Node automatically waits and checks status every 10 seconds
+2. Node automatically waits and checks status every 5 seconds
 3. Watch the console for progress updates
 4. When completed, `video_url` output has the download link
 5. Connect `video_url` directly to "Save Video from URL" or preview nodes!
@@ -160,12 +160,12 @@ models:
 ```
 [INFO] Video generation started. ID: video_abc123
 [INFO] Initial status: queued
-[INFO] Auto-polling enabled. Will check every 10s (max 600s)
-[INFO] Waiting 10s before checking status...
-[INFO] Status check (10s elapsed): processing
-[INFO] Waiting 10s before checking status...
-[INFO] Status check (20s elapsed): completed
-[SUCCESS] Video completed after 20s!
+[INFO] Auto-polling enabled. Will check every 5s (max 1200s)
+[INFO] Waiting 5s before checking status...
+[INFO] Status check (5s elapsed): processing
+[INFO] Waiting 5s before checking status...
+[INFO] Status check (10s elapsed): completed
+[SUCCESS] Video completed after 10s!
 [SUCCESS] Video URL: https://...
 ```
 
