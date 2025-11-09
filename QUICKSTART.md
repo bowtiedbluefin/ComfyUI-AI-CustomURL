@@ -131,12 +131,37 @@ models:
 - `fps` is filtered out (not supported by OpenAI)
 - For image-to-video, connect an image input → `image` parameter
 
+### 🔄 Understanding Video Generation Workflow
+
+**OpenAI's video API is asynchronous**, meaning:
+1. You submit a request → Get a video ID back
+2. Video generates in the background (takes time)
+3. You check status using the video ID
+4. Once "completed", you get the download URL
+
+**Check the Console Output:**
+When you run "Generate Video", check your ComfyUI console/terminal for:
+```
+[DEBUG] API Response:
+{
+  "id": "video_abc123",
+  "status": "processing",
+  ...
+}
+```
+
+**If you see a video ID**, use the "Retrieve Video Status" node:
+1. Add "Retrieve Video Status (AI CustomURL)" node
+2. Copy the video ID from console or `video_url` output
+3. Run it periodically until `status` = "completed"
+4. The `video_url` output will have the download link
+
 ### 💾 Saving Video Locally
 
-To download and save the generated video:
+Once you have the video URL (from completed generation):
 
 1. Add "Save Video from URL" node
-2. Connect the `video_url` output from "Generate Video" → `video_url` input
+2. Connect the `video_url` output → `video_url` input
 3. Configure save settings:
    ```
    filename: my_video_{timestamp}
