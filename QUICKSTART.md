@@ -116,8 +116,24 @@ models:
    aspect_ratio: 16:9
    duration: 4
    fps: 24
+   auto_poll: true
+   poll_interval: 10
+   max_wait_time: 600
    ```
-3. Execute → Get your generated video URL!
+3. Execute → The node will automatically wait until video is ready!
+
+**Auto-Polling Feature** (enabled by default):
+- `auto_poll: true` → Node automatically checks video status every X seconds
+- `poll_interval: 10` → Check every 10 seconds
+- `max_wait_time: 600` → Give up after 10 minutes
+- You'll see status updates in the console
+- Once completed, `video_url` output contains the download link
+- `video_id` output contains the generation ID (for manual retrieval if needed)
+
+**Outputs:**
+- `video_url` → Direct link to download video (when completed)
+- `video_id` → OpenAI's video generation ID
+- `response_json` → Full API response for debugging
 
 **Note**: The node automatically converts parameters to OpenAI's format:
 - `resolution` + `aspect_ratio` → `size` (OpenAI only supports 4 sizes):
@@ -133,43 +149,56 @@ models:
 
 ### 🔄 Understanding Video Generation Workflow
 
-**OpenAI's video API is asynchronous**, meaning:
-1. You submit a request → Get a video ID back
-2. Video generates in the background (takes time)
-3. You check status using the video ID
-4. Once "completed", you get the download URL
+**With Auto-Polling (Default - Recommended):**
+1. Run "Generate Video" node with `auto_poll: true`
+2. Node automatically waits and checks status every 10 seconds
+3. Watch the console for progress updates
+4. When completed, `video_url` output has the download link
+5. Connect `video_url` directly to "Save Video from URL" or preview nodes!
 
-**Check the Console Output:**
-When you run "Generate Video", check your ComfyUI console/terminal for:
+**Console Output Example:**
 ```
-[DEBUG] API Response:
-{
-  "id": "video_abc123",
-  "status": "processing",
-  ...
-}
+[INFO] Video generation started. ID: video_abc123
+[INFO] Initial status: queued
+[INFO] Auto-polling enabled. Will check every 10s (max 600s)
+[INFO] Waiting 10s before checking status...
+[INFO] Status check (10s elapsed): processing
+[INFO] Waiting 10s before checking status...
+[INFO] Status check (20s elapsed): completed
+[SUCCESS] Video completed after 20s!
+[SUCCESS] Video URL: https://...
 ```
 
-**If you see a video ID**, use the "Retrieve Video Status" node:
+**Manual Polling (If Auto-Poll Disabled):**
+If you set `auto_poll: false`, use the "Retrieve Video Status" node:
 1. Add "Retrieve Video Status (AI CustomURL)" node
-2. Copy the video ID from console or `video_url` output
-3. Run it periodically until `status` = "completed"
-4. The `video_url` output will have the download link
+2. Connect `video_id` output from Generate node → `video_id` input
+3. Run it to check status
+4. When status = "completed", use the `video_url` output
 
 ### 💾 Saving Video Locally
 
-Once you have the video URL (from completed generation):
+**Simple Workflow (Direct Connection):**
 
-1. Add "Save Video from URL" node
-2. Connect the `video_url` output → `video_url` input
-3. Configure save settings:
+```
+[Generate Video] → video_url → [Save Video from URL]
+                                       ↓
+                                 Saved to disk!
+```
+
+1. Add "Generate Video (AI CustomURL)" node (with auto_poll enabled)
+2. Add "Save Video from URL" node
+3. Connect `video_url` output → `video_url` input
+4. Configure save settings on Save node:
    ```
    filename: my_video_{timestamp}
    output_folder: output/videos
    ```
-4. Execute → Video downloads to your local folder!
+5. Run the workflow → Video generates, polls until complete, then downloads automatically!
 
 The `{timestamp}` placeholder automatically adds a unique timestamp to each file.
+
+**That's it!** No manual copying, no waiting. The workflow handles everything.
 
 ## 🎯 Example: Using Advanced Parameters
 

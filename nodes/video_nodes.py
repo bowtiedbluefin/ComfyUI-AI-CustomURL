@@ -1,6 +1,7 @@
 """Video generation nodes for AI CustomURL"""
 
 import json
+import time
 
 
 class VideoGenerationNode:
@@ -46,6 +47,21 @@ class VideoGenerationNode:
                 "aspect_ratio": (["16:9", "9:16", "1:1", "4:3", "21:9"], {
                     "default": "16:9",
                 }),
+                "auto_poll": (["true", "false"], {
+                    "default": "true",
+                }),
+                "poll_interval": ("INT", {
+                    "default": 10,
+                    "min": 5,
+                    "max": 60,
+                    "step": 5,
+                }),
+                "max_wait_time": ("INT", {
+                    "default": 600,
+                    "min": 60,
+                    "max": 3600,
+                    "step": 60,
+                }),
             },
             "optional": {
                 "image": ("IMAGE",),
@@ -56,8 +72,8 @@ class VideoGenerationNode:
             },
         }
     
-    RETURN_TYPES = ("STRING", "STRING")
-    RETURN_NAMES = ("video_url", "response_json")
+    RETURN_TYPES = ("STRING", "STRING", "STRING")
+    RETURN_NAMES = ("video_url", "video_id", "response_json")
     FUNCTION = "generate_video"
     CATEGORY = "ai_customurl"
     
@@ -71,10 +87,13 @@ class VideoGenerationNode:
         duration,
         fps,
         aspect_ratio,
+        auto_poll,
+        poll_interval,
+        max_wait_time,
         image=None,
         advanced_params_json="",
     ):
-        """Execute video generation"""
+        """Execute video generation with optional auto-polling"""
         
         from ..utils.api_client import OpenAIAPIClient
         from ..utils.converters import image_to_base64
@@ -184,35 +203,74 @@ class VideoGenerationNode:
             
             # Log the full response for debugging
             response_json = json.dumps(response, indent=2)
-            print(f"[DEBUG] API Response:\n{response_json}")
+            print(f"[DEBUG] Initial API Response:\n{response_json}")
             
             # Extract video ID or URL from response
-            # OpenAI's video API may return:
-            # - video ID for async generation (need to poll for completion)
-            # - direct video URL (if synchronous)
             video_url = ""
             video_id = ""
+            status = "unknown"
             
             # Check for video ID (async response)
             if "id" in response:
                 video_id = response.get("id", "")
-                print(f"[INFO] Video generation started. ID: {video_id}")
-                
-                # Check status
                 status = response.get("status", "unknown")
-                print(f"[INFO] Status: {status}")
+                print(f"[INFO] Video generation started. ID: {video_id}")
+                print(f"[INFO] Initial status: {status}")
                 
-                # If completed, try to get URL
+                # If auto-polling enabled and not completed, poll until done
+                if auto_poll == "true" and status != "completed":
+                    print(f"[INFO] Auto-polling enabled. Will check every {poll_interval}s (max {max_wait_time}s)")
+                    
+                    start_time = time.time()
+                    while (time.time() - start_time) < max_wait_time:
+                        if status == "completed":
+                            break
+                        
+                        # Wait before polling
+                        print(f"[INFO] Waiting {poll_interval}s before checking status...")
+                        time.sleep(poll_interval)
+                        
+                        # Poll for status
+                        try:
+                            poll_response = client._request("GET", f"/videos/{video_id}")
+                            status = poll_response.get("status", "unknown")
+                            elapsed = int(time.time() - start_time)
+                            print(f"[INFO] Status check ({elapsed}s elapsed): {status}")
+                            
+                            if status == "completed":
+                                response = poll_response
+                                response_json = json.dumps(response, indent=2)
+                                print(f"[SUCCESS] Video completed after {elapsed}s!")
+                                break
+                            elif status == "failed":
+                                error_msg = poll_response.get("error", "Unknown error")
+                                print(f"[ERROR] Video generation failed: {error_msg}")
+                                return ("", video_id, json.dumps(poll_response, indent=2))
+                        except Exception as poll_error:
+                            print(f"[WARNING] Poll error: {poll_error}")
+                            # Continue polling despite error
+                    
+                    # Check if we timed out
+                    if status != "completed":
+                        print(f"[WARNING] Max wait time ({max_wait_time}s) reached. Status: {status}")
+                        print(f"[INFO] Use 'Retrieve Video Status' node with ID: {video_id}")
+                        return ("", video_id, response_json)
+                
+                # Extract URL if completed
                 if status == "completed":
                     if "url" in response:
                         video_url = response.get("url", "")
                     elif "output_url" in response:
                         video_url = response.get("output_url", "")
-                else:
-                    # Video is still processing
-                    video_url = f"processing: video ID {video_id}, status: {status}"
+                    elif "download_url" in response:
+                        video_url = response.get("download_url", "")
+                    
+                    if video_url:
+                        print(f"[SUCCESS] Video URL: {video_url}")
+                    else:
+                        print(f"[WARNING] Video completed but no URL found in response")
             
-            # Check for direct video URL (sync response)
+            # Check for direct video URL (sync response - non-OpenAI APIs)
             elif "video" in response:
                 video_url = response["video"].get("url", "")
             elif "data" in response and len(response["data"]) > 0:
@@ -222,14 +280,13 @@ class VideoGenerationNode:
             
             if not video_url and not video_id:
                 print(f"[WARNING] No video URL or ID found in response")
-                video_url = "error: no video URL or ID in response"
             
-            return (video_url, response_json)
+            return (video_url, video_id, response_json)
             
         except Exception as e:
             error_msg = f"Video generation failed: {str(e)}"
             print(error_msg)
-            return (error_msg, str(e))
+            return (error_msg, "", str(e))
 
 
 class VideoAdvancedParamsNode:
