@@ -348,8 +348,8 @@ class ShowTextNode:
         display_text = text if text and text.strip() else "(empty)"
         print(f"[SHOW TEXT] {display_text}")
 
-        # Return UI data for ComfyUI display and pass through result
-        return {"ui": {"text": display_text}, "result": (text,)}
+        # Simple return for now - just the text
+        return (text,)
 
 
 NODE_CLASS_MAPPINGS = {
