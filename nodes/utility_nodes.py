@@ -343,8 +343,8 @@ class ShowTextNode:
     def show_text(self, text):
         """Display text in UI and pass it through"""
         print(f"[SHOW TEXT] {text}")
-        # Simple format that won't freeze the UI
-        return {"ui": {"text": [text]}, "result": (text,)}
+        # Just pass through - no UI display to prevent freezing
+        return (text,)
 
 
 NODE_CLASS_MAPPINGS = {

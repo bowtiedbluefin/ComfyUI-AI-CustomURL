@@ -255,11 +255,7 @@ class VideoGenerationNode:
                                 error_msg = poll_response.get("error", "Unknown error")
                                 status_log.append(f"❌ Video generation failed: {error_msg}")
                                 print(f"[ERROR] Video generation failed: {error_msg}")
-                                status_message = "\n".join(status_log)
-                                return {
-                                    "ui": {"text": status_message},
-                                    "result": ("", video_id, api_key, "failed", json.dumps(poll_response, indent=2))
-                                }
+                                return ("", video_id, api_key, "failed", json.dumps(poll_response, indent=2))
                         except Exception as poll_error:
                             print(f"[WARNING] Poll error: {poll_error}")
                             status_log.append(f"⚠️ Poll warning: {str(poll_error)}")
@@ -271,11 +267,7 @@ class VideoGenerationNode:
                         status_log.append(f"Use 'Retrieve Video Status' node with ID: {video_id}")
                         print(f"[WARNING] Max wait time ({max_wait_time}s) reached. Status: {status}")
                         print(f"[INFO] Use 'Retrieve Video Status' node with ID: {video_id}")
-                        status_message = "\n".join(status_log)
-                        return {
-                            "ui": {"text": status_message},
-                            "result": ("", video_id, api_key, f"timeout (status: {status})", response_json)
-                        }
+                        return ("", video_id, api_key, f"timeout (status: {status})", response_json)
                 
                 # Extract URL if completed
                 if status == "completed":
@@ -318,20 +310,16 @@ class VideoGenerationNode:
                 status = "completed"
                 status_log.append(f"✅ Video ready! URL: {video_url[:50]}...")
             
-            # Return with UI text for status display
-            status_message = "\n".join(status_log) if status_log else f"Status: {status}"
-            return {
-                "ui": {"text": status_message},
-                "result": (video_url, video_id, api_key, status, response_json)
-            }
+            # Print status to console
+            if status_log:
+                print("\n".join(status_log))
+            
+            return (video_url, video_id, api_key, status, response_json)
             
         except Exception as e:
-            error_msg = f"❌ Video generation failed: {str(e)}"
+            error_msg = f"Video generation failed: {str(e)}"
             print(error_msg)
-            return {
-                "ui": {"text": error_msg},
-                "result": (error_msg, "", "", "error", str(e))
-            }
+            return (error_msg, "", "", "error", str(e))
 
 
 class VideoAdvancedParamsNode:
@@ -494,11 +482,9 @@ class VideoRetrieveNode:
                 if "video ID " in video_id:
                     video_id = video_id.split("video ID ")[1].split(",")[0].strip()
                 else:
-                    error_msg = f"❌ Invalid video ID: {video_id}"
-                    return {
-                        "ui": {"text": error_msg},
-                        "result": ("", "error", f"Invalid video ID: {video_id}")
-                    }
+                    error_msg = f"Invalid video ID: {video_id}"
+                    print(f"[ERROR] {error_msg}")
+                    return ("", "error", error_msg)
             
             client = OpenAIAPIClient(base_url, api_key)
             
@@ -546,18 +532,14 @@ class VideoRetrieveNode:
                 status_message += f"ℹ️ Video status: {status}"
                 print(f"[INFO] Video status: {status}")
             
-            return {
-                "ui": {"text": status_message},
-                "result": (video_url, status, response_json)
-            }
+            # Print status to console
+            print(status_message)
+            return (video_url, status, response_json)
             
         except Exception as e:
-            error_msg = f"❌ Failed to retrieve video: {str(e)}"
-            print(error_msg)
-            return {
-                "ui": {"text": error_msg},
-                "result": ("", "error", str(e))
-            }
+            error_msg = f"Failed to retrieve video: {str(e)}"
+            print(f"[ERROR] {error_msg}")
+            return ("", "error", str(e))
 
 
 class VideoPreviewNode:
