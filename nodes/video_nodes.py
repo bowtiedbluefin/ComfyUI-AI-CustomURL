@@ -619,19 +619,10 @@ class VideoPreviewNode:
             except OSError:
                 print(f"[SUCCESS] Video ready for preview: {filename}")
 
-            # Return video in proper ComfyUI format for video preview
-            # Try different format options - ComfyUI might expect different format strings
-            return {
-                "ui": {
-                    "videos": [{
-                        "filename": filename,
-                        "subfolder": subfolder,
-                        "type": video_type,
-                        "format": "video/mp4"  # Try standard mp4 format instead of h264-mp4
-                    }]
-                },
-                "result": (filepath,)
-            }
+            # For now, just return the filepath without UI display to prevent freezing
+            # The video file is saved and can be accessed directly from the output directory
+            print(f"[INFO] Video file ready at: {filepath}")
+            return (filepath,)
 
         except Exception as e:
             error_msg = f"Failed to preview video: {str(e)}"
